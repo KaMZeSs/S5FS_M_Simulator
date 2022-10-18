@@ -13,8 +13,8 @@ namespace S5FS
 
         public UInt16 di_mode; // тип файла, права доступа тип|suid|sgid|stickyBit|rwx|rwx|rwx           2 байта
         public UInt16 di_nlinks; // число ссылок на файл                                                   2 байта
-        public UInt16 di_uid; // идентефикатор владельца-пользователя                                      2 байта
-        public UInt16 di_gid; // идентефикатор владельца-группы                                            2 байта
+        public UInt16 di_uid; // идентификатор владельца-пользователя                                      2 байта
+        public UInt16 di_gid; // идентификатор владельца-группы                                            2 байта
         public UInt64 di_size; // размер файла в байтах                                                    8 байт
         public UInt64 di_atime; // время последнего доступа к файлу                                        8 байт
         public UInt64 di_mtime; // время последней модификации                                             8 байт

@@ -18,7 +18,8 @@ namespace S5FS
         public UInt64 s_tinode; // Число свободных inode, доступных для размещения                                     8 байт
         public Byte s_fmod; // флаг модификации                                                                        1 байт
         public UInt32 s_blen; // размер логического блока                                                              4 байт
-        public UInt64[] s_f_inodes; // список номеров свободных inode PS: постоянного размера                      2008 байт (251 адрес) нужно в конце зарезервировать 2 байта чтобы до 2048
+        public UInt64 s_lbit; // Номер последнего блока, занятого битовой картой                                       8 байт
+        public UInt64[] s_f_inodes; // список номеров свободных inode PS: постоянного размера                      2000 байт (250 адресов) нужно в конце зарезервировать 2 байта чтобы до 2048
 
         public SuperBlock()
         {
@@ -48,7 +49,8 @@ namespace S5FS
             Array.Copy(BitConverter.GetBytes(s_tinode), 0, superBlock, 25, 8);
             superBlock[33] = s_fmod; //Array.Copy(BitConverter.GetBytes(s_fmod), 0, superBlock, 33, 1);
             Array.Copy(BitConverter.GetBytes(s_blen), 0, superBlock, 34, 4);
-            long curr = 38;
+            Array.Copy(BitConverter.GetBytes(s_lbit), 0, superBlock, 38, 8);
+            long curr = 46;
             foreach (var i in s_f_inodes)
             {
                 Array.Copy(BitConverter.GetBytes(i), 0, superBlock, curr, 8);
@@ -73,8 +75,9 @@ namespace S5FS
             sb.s_tinode = BitConverter.ToUInt64(array, 25);
             sb.s_fmod = array[33];
             sb.s_blen = BitConverter.ToUInt32(array, 34);
+            sb.s_lbit = BitConverter.ToUInt64(array, 38);
 
-            for (int i = 0, curr = 38; i < sb.s_f_inodes.Length; i++, curr += 8)
+            for (int i = 0, curr = 46; i < sb.s_f_inodes.Length; i++, curr += 8)
             {
                 sb.s_f_inodes[i] = BitConverter.ToUInt64(array, curr);
             }

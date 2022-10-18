@@ -7,7 +7,10 @@ using System.Threading.Tasks;
 
 namespace S5FS
 {
-    internal class BitMap
+    //Сохраняется в n-ом к-ве первых кластеров. Данные кластеры входят в карту
+    //Для карты выделен 0й - блок, указанный в суперблоке
+
+    internal class BitMap 
     {
         public byte[] map;
 
@@ -22,7 +25,6 @@ namespace S5FS
 
         public void ChangeBlockState(UInt64 block_number, bool value)
         {
-
             Byte bit_num = (byte)(block_number % 8);
             UInt64 byte_num = block_number / 8;
             System.Collections.BitArray bitArray = new System.Collections.BitArray(new byte[] { map[byte_num] });
