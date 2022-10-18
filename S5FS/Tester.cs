@@ -10,9 +10,11 @@ namespace S5FS
     {
         public static void Main()
         {
-            SuperBlock block = new();
-            var arr = block.SaveToByteArray();
-            SuperBlock bl2 = SuperBlock.LoadFromByteArray(arr);
+            BinaryWriter bw = new BinaryWriter(System.IO.File.OpenWrite("qweqw"));
+            UInt64 b = 0x1023456789ABCDEF;
+            bw.Write(b);
+            bw.Flush();
+            
         }
     }
 }
