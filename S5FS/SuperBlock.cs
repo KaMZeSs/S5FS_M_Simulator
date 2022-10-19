@@ -21,37 +21,39 @@ namespace S5FS
         public UInt64 s_lbit; // Номер последнего блока, занятого битовой картой                                       8 байт
         public UInt64[] s_f_inodes; // список номеров свободных inode PS: постоянного размера                      2000 байт (250 адресов) нужно в конце зарезервировать 2 байта чтобы до 2048
 
-        public SuperBlock()
+        private SuperBlock() { }    
+
+        public SuperBlock(UInt64 disk_size, UInt32 s_blen = 2048)
         {
-            s_type = 0xFA; 
-            s_fsize = 1024;
-            s_isize = 256;
-            s_tfree = 512;
-            s_tinode = 128;
-            s_fmod = 0xFF;
-            s_blen = 2048;
-            s_f_inodes = new UInt64[max_inode_list_size];
+            this.s_type = 0xFA;
+            this.s_blen = s_blen;
+            this.s_fmod = 0xFF;
+
+            //Получаем к-во inode
+            this.s_isize = this.s_tinode = (disk_size - 2048) / 16;
+
+            UInt64 left_disk_size = disk_size - s_isize * 144;
+            
+            this.s_tfree = left_disk_size / this.s_blen;
+            this.s_fsize = this.s_tfree + 2;
+
+            this.s_f_inodes = new UInt64[max_inode_list_size];
         }
 
-        public SuperBlock(bool a)
-        {
-            s_f_inodes = new UInt64[max_inode_list_size];
-        }
-
-        public byte[] SaveToByteArray()
+        public static byte[] SaveToByteArray(SuperBlock sb)
         {
             var superBlock = new byte[2048];
 
-            superBlock[0] = s_type; //Array.Copy(BitConverter.GetBytes(s_type), 0, superBlock, 0, 1);
-            Array.Copy(BitConverter.GetBytes(s_fsize), 0, superBlock, 1, 8);
-            Array.Copy(BitConverter.GetBytes(s_isize), 0, superBlock, 9, 8);
-            Array.Copy(BitConverter.GetBytes(s_tfree), 0, superBlock, 17, 8);
-            Array.Copy(BitConverter.GetBytes(s_tinode), 0, superBlock, 25, 8);
-            superBlock[33] = s_fmod; //Array.Copy(BitConverter.GetBytes(s_fmod), 0, superBlock, 33, 1);
-            Array.Copy(BitConverter.GetBytes(s_blen), 0, superBlock, 34, 4);
-            Array.Copy(BitConverter.GetBytes(s_lbit), 0, superBlock, 38, 8);
+            superBlock[0] = sb.s_type; //Array.Copy(BitConverter.GetBytes(sb.s_type), 0, superBlock, 0, 1);
+            Array.Copy(BitConverter.GetBytes(sb.s_fsize), 0, superBlock, 1, 8);
+            Array.Copy(BitConverter.GetBytes(sb.s_isize), 0, superBlock, 9, 8);
+            Array.Copy(BitConverter.GetBytes(sb.s_tfree), 0, superBlock, 17, 8);
+            Array.Copy(BitConverter.GetBytes(sb.s_tinode), 0, superBlock, 25, 8);
+            superBlock[33] = sb.s_fmod; //Array.Copy(BitConverter.GetBytes(sb.s_fmod), 0, superBlock, 33, 1);
+            Array.Copy(BitConverter.GetBytes(sb.s_blen), 0, superBlock, 34, 4);
+            Array.Copy(BitConverter.GetBytes(sb.s_lbit), 0, superBlock, 38, 8);
             long curr = 46;
-            foreach (var i in s_f_inodes)
+            foreach (var i in sb.s_f_inodes)
             {
                 Array.Copy(BitConverter.GetBytes(i), 0, superBlock, curr, 8);
                 curr += 8;
@@ -62,7 +64,7 @@ namespace S5FS
 
         public static SuperBlock LoadFromByteArray(byte[] array)
         {
-            var sb = new SuperBlock(true);
+            var sb = new SuperBlock();
             if (array.Length != superblock_size)
             {
                 throw new Exception("SuperBlock size must be 2048 bytes");
