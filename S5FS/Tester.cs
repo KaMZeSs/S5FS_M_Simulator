@@ -11,12 +11,12 @@ namespace S5FS
     {
         public static void Main()
         {
-            
-            Program program = new Program();
-            
-
-            S5FS.format("E:\\Repos\\S5FS_M_Simulator\\S5FS\\bin\\Debug\\net6.0\\qwe", 4096, 20971520);
-            
+            byte[] array = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+            var slc = Helper.Slicer(array, 4).GetEnumerator();
+            while (slc.MoveNext())
+            {
+                Console.WriteLine(String.Join(" ", slc.Current));
+            }            
         }
     }
 }

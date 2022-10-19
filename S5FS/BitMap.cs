@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace S5FS
 {
     /// <summary>
-    /// Массив байт, который содержит о свободных/занятых блоках. Для определения, что iй блок пуст/заполнен, необходимо проанализировать iй бит.
+    /// Массив байт, который содержит о свободных/занятых блоках/кластерах. Для определения, что iй блок пуст/заполнен, необходимо проанализировать iй бит.
     /// Содержится в n-ом к-ве первых кластеров. Данные кластеры входят в карту.
     /// </summary>
     internal class BitMap 
@@ -17,6 +17,13 @@ namespace S5FS
         /// Битовая карта
         /// </summary>
         public byte[] map;
+        public UInt64 length;
+
+        public BitMap(byte[] map, ulong length)
+        {
+            this.map = map;
+            this.length = length;
+        }
 
         /// <summary>
         /// Проверка на занятость блока.
@@ -25,6 +32,10 @@ namespace S5FS
         /// <returns>Булевое значение занятости блока. True - блок свободен, False - блок занят.</returns>
         public bool isBlockEmpty(UInt64 block_number)
         {
+            if (block_number >= this.length || block_number < 0)
+            {
+                throw new ArgumentOutOfRangeException();
+            }
             Byte bit_num = (byte)(block_number % 8);
             UInt64 byte_num = block_number / 8;
             System.Collections.BitArray bitArray = new System.Collections.BitArray(new byte[] { map[byte_num] });
@@ -38,6 +49,10 @@ namespace S5FS
         /// <param name="value">Новое состояние.</param>
         public void ChangeBlockState(UInt64 block_number, bool value)
         {
+            if (block_number >= this.length || block_number < 0)
+            {
+                throw new ArgumentOutOfRangeException();
+            }
             Byte bit_num = (byte)(block_number % 8);
             UInt64 byte_num = block_number / 8;
             System.Collections.BitArray bitArray = new System.Collections.BitArray(new byte[] { map[byte_num] });
