@@ -7,25 +7,60 @@ using System.Threading.Tasks;
 
 namespace S5FS
 {
-    internal class Inode //                                                                         144 байта
+    /// <summary>
+    /// Вес: 144 байта
+    /// </summary>
+    internal class Inode
     {
         const int inode_size = 144;
 
-        public UInt16 di_mode; // тип файла, права доступа тип|suid|sgid|stickyBit|rwx|rwx|rwx           2 байта
-        public UInt16 di_nlinks; // число ссылок на файл                                                   2 байта
-        public UInt16 di_uid; // идентификатор владельца-пользователя                                      2 байта
-        public UInt16 di_gid; // идентификатор владельца-группы                                            2 байта
-        public UInt64 di_size; // размер файла в байтах                                                    8 байт
-        public UInt64 di_atime; // время последнего доступа к файлу                                        8 байт
-        public UInt64 di_mtime; // время последней модификации                                             8 байт
-        public UInt64 di_ctime; // время последней модификации inode                                       8 байт
-        public UInt64[] di_addr; //массив адресов дисковых блоков хранения данных. 13 элементов    8*13 =  104 байт
+        /// <summary>
+        /// Тип файла, права доступа тип|suid|sgid|stickyBit|rwx|rwx|rwx. 2 байта.
+        /// </summary>
+        public UInt16 di_mode;
+        /// <summary>
+        /// Число ссылок на файл. 2 байта.
+        /// </summary>
+        public UInt16 di_nlinks;
+        /// <summary>
+        /// Идентификатор владельца-пользователя. 2 байта.
+        /// </summary>
+        public UInt16 di_uid;
+        /// <summary>
+        /// Идентификатор владельца-группы. 2 байта.
+        /// </summary>
+        public UInt16 di_gid;
+        /// <summary>
+        /// Размер файла в байтах. 8 байт.
+        /// </summary>
+        public UInt64 di_size;
+        /// <summary>
+        /// Время последнего доступа к файлу. 8 байт.
+        /// </summary>
+        public UInt64 di_atime;
+        /// <summary>
+        /// Время последней модификации. 8 байт.
+        /// </summary>
+        public UInt64 di_mtime;
+        /// <summary>
+        /// Время последней модификации inode. 8 байт.
+        /// </summary>
+        public UInt64 di_ctime;
+        /// <summary>
+        /// Массив адресов дисковых блоков хранения данных. 13 элементов. 8*13 =  104 байт.
+        /// </summary>
+        public UInt64[] di_addr;
 
         public Inode()
         {
             this.di_addr = new UInt64[13];
         }
 
+        /// <summary>
+        /// Преобразует один инод в массив байт.
+        /// </summary>
+        /// <param name="inode">Преобразуемый инод.</param>
+        /// <returns>Массив байт.</returns>
         public static byte[] SaveToByteArray(Inode inode)
         {
             var bytes = new byte[144];
@@ -49,6 +84,12 @@ namespace S5FS
             return bytes;
         }
 
+        /// <summary>
+        /// Преобразует массив байт в один инод.
+        /// </summary>
+        /// <param name="array">Обрабатываемый массив.</param>
+        /// <returns>Один инод.</returns>
+        /// <exception cref="Exception"></exception>
         public static Inode LoadFromByteArray(byte[] array)
         {
             if (array.Length != inode_size)

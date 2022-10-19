@@ -7,22 +7,35 @@ using System.Threading.Tasks;
 
 namespace S5FS
 {
-    //Сохраняется в n-ом к-ве первых кластеров. Данные кластеры входят в карту
-    //Для карты выделен 0й - блок, указанный в суперблоке
-
+    /// <summary>
+    /// Массив байт, который содержит о свободных/занятых блоках. Для определения, что iй блок пуст/заполнен, необходимо проанализировать iй бит.
+    /// Содержится в n-ом к-ве первых кластеров. Данные кластеры входят в карту.
+    /// </summary>
     internal class BitMap 
     {
+        /// <summary>
+        /// Битовая карта
+        /// </summary>
         public byte[] map;
 
+        /// <summary>
+        /// Проверка на занятость блока.
+        /// </summary>
+        /// <param name="block_number">Номер блока</param>
+        /// <returns>Булевое значение занятости блока. True - блок свободен, False - блок занят.</returns>
         public bool isBlockEmpty(UInt64 block_number)
         {
-            
             Byte bit_num = (byte)(block_number % 8);
             UInt64 byte_num = block_number / 8;
             System.Collections.BitArray bitArray = new System.Collections.BitArray(new byte[] { map[byte_num] });
             return bitArray.Get(bit_num);
         }
 
+        /// <summary>
+        /// Изменить состояние блока.
+        /// </summary>
+        /// <param name="block_number">Номер блока.</param>
+        /// <param name="value">Новое состояние.</param>
         public void ChangeBlockState(UInt64 block_number, bool value)
         {
             Byte bit_num = (byte)(block_number % 8);
@@ -32,6 +45,12 @@ namespace S5FS
             map[byte_num] = ConvertToByte(bitArray);
         }
 
+        /// <summary>
+        /// Конвертация массива из 8 битов в один байт
+        /// </summary>
+        /// <param name="bits">Массив битов.</param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException"></exception>
         byte ConvertToByte(System.Collections.BitArray bits)
         {
             if (bits.Count != 8)

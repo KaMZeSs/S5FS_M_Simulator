@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Dynamic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -10,10 +11,11 @@ namespace S5FS
     {
         public static void Main()
         {
-            BinaryWriter bw = new BinaryWriter(System.IO.File.OpenWrite("qweqw"));
-            UInt64 b = 0x1023456789ABCDEF;
-            bw.Write(b);
-            bw.Flush();
+            
+            Program program = new Program();
+            
+
+            S5FS.format("E:\\Repos\\S5FS_M_Simulator\\S5FS\\bin\\Debug\\net6.0\\qwe", 4096, 20971520);
             
         }
     }
