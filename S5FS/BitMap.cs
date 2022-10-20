@@ -20,9 +20,10 @@ namespace S5FS
         public UInt64 length;
         public UInt64 start_block;
 
-        public BitMap(byte[] map, ulong length, ulong start_block)
+        public BitMap(ulong array_len, ulong length, ulong start_block)
         {
-            this.map = map;
+            this.map = new byte[array_len];
+            Array.Fill<byte>(this.map, 0b_1111_1111);
             this.length = length;
             this.start_block = start_block;
         }
@@ -46,6 +47,7 @@ namespace S5FS
 
         /// <summary>
         /// Изменить состояние блока.
+        /// True - блок свободен, False - блок занят.
         /// </summary>
         /// <param name="block_number">Номер блока.</param>
         /// <param name="value">Новое состояние.</param>

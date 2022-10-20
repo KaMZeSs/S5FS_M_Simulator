@@ -42,25 +42,27 @@ namespace S5FS
             byte[] buffer = SuperBlock.SaveToByteArray(s5FS.sb);
             s5FS.fs.Write(buffer);
             s5FS.fs.Flush();
-            
-            s5FS.blocks_offset = (ulong)buffer.LongLength + SuperBlock.superblock_size;
 
             //Выделить место под индексные
             buffer = new byte[s5FS.sb.s_isize * 144];
             s5FS.fs.Write(buffer);
             s5FS.fs.Flush();
 
+            s5FS.blocks_offset = (ulong)buffer.LongLength + SuperBlock.superblock_size;
+
             // Выделить место под блоки данных
+            // Потом, когда все будет работать, выделить больше до полного размера
             var block_bytes = new byte[s5FS.sb.s_blen * (s5FS.sb.s_fsize-2)];
             s5FS.fs.Write(block_bytes);
+            s5FS.fs.Flush();
 
             //Создание битмапов
             UInt64 inode_bm_len = s5FS.sb.s_isize / 8;
-            if (inode_bm_len % 8 != 0)
+            if (s5FS.sb.s_isize % 8 != 0)
             {
                 inode_bm_len++;
             }
-            s5FS.bm_inode = new(new byte[inode_bm_len], s5FS.sb.s_isize, 0);
+            s5FS.bm_inode = new(inode_bm_len, s5FS.sb.s_isize, 0);
             s5FS.WriteBitMap(s5FS.bm_inode);
 
             UInt64 blocks_bm_len = (s5FS.sb.s_fsize - 2) / 8;
@@ -73,7 +75,15 @@ namespace S5FS
             {
                 blocks_bm_start++;
             }
-            s5FS.bm_block = new(new byte[blocks_bm_len], s5FS.sb.s_fsize - 2, blocks_bm_start);
+            s5FS.bm_block = new(blocks_bm_len, s5FS.sb.s_fsize - 2, blocks_bm_start);
+            //Зная, где начинается и заканчиваются битмапы - заполняю битмап
+            var temp = blocks_bm_len % s5FS.sb.s_blen == 0 ? blocks_bm_len / s5FS.sb.s_blen : (blocks_bm_len / s5FS.sb.s_blen + 1);
+            UInt64 len = blocks_bm_start + temp;
+            for (UInt64 i = 0; i < len; i++)
+            {
+                s5FS.bm_block.ChangeBlockState(i, false);
+            }
+
             s5FS.WriteBitMap(s5FS.bm_block);
 
             return s5FS;
@@ -103,7 +113,7 @@ namespace S5FS
 
         private void Seek(UInt64 num, SeekOrigin seekOrigin)
         {
-            if (seekOrigin == SeekOrigin.End)
+            if (seekOrigin is SeekOrigin.End)
             {
                 throw new Exception("Мы так не работаем");
             }

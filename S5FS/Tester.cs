@@ -11,12 +11,8 @@ namespace S5FS
     {
         public static void Main()
         {
-            byte[] array = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
-            var slc = Helper.Slicer(array, 4).GetEnumerator();
-            while (slc.MoveNext())
-            {
-                Console.WriteLine(String.Join(" ", slc.Current));
-            }            
+            File.Delete("qwe");
+            var s5fs = S5FS.format("qwe", 2048, 5242880);        
         }
     }
 }

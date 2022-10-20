@@ -58,7 +58,7 @@ namespace S5FS
             //Получаем к-во inode
             this.s_isize = this.s_tinode = (disk_size - 2048) / 16 / 144;
 
-            UInt64 left_disk_size = disk_size - (s_isize * 144);
+            UInt64 left_disk_size = disk_size - (s_isize * 144) - SuperBlock.superblock_size;
             
             this.s_tfree = left_disk_size / this.s_blen;
             this.s_fsize = this.s_tfree + 2;
