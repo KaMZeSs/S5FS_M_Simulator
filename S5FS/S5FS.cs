@@ -102,6 +102,33 @@ namespace S5FS
         }
 
         /// <summary>
+        /// Считывание файловой системы из файла
+        /// </summary>
+        /// <param name="file"></param>
+        /// <returns>Объект файловой системы</returns>
+        /// <exception cref="FileNotFoundException"></exception>
+        public static S5FS load_from_file(String file)
+        {
+            S5FS s5fs = new();
+            if (!File.Exists(file))
+            {
+                throw new FileNotFoundException();
+            }
+            s5fs.fs = new(file, FileMode.Open, FileAccess.ReadWrite);
+
+            var bytes = new byte[512];
+            
+            //Суперблок
+            s5fs.fs.Read(bytes, 0, bytes.Length);
+            s5fs.sb = SuperBlock.LoadFromByteArray(bytes);
+
+            //Продуктивность поделилась на 0
+
+
+            return s5fs;
+        }
+
+        /// <summary>
         /// Стандартный метод записи/обновления битовой карты.
         /// </summary>
         /// <param name="map"></param>
