@@ -18,11 +18,13 @@ namespace S5FS
         /// </summary>
         public byte[] map;
         public UInt64 length;
+        public UInt64 start_block;
 
-        public BitMap(byte[] map, ulong length)
+        public BitMap(byte[] map, ulong length, ulong start_block)
         {
             this.map = map;
             this.length = length;
+            this.start_block = start_block;
         }
 
         /// <summary>
