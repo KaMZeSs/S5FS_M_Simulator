@@ -13,9 +13,21 @@ namespace S5FS
     /// </summary>
     internal class S5FS
     {
+        /// <summary>
+        /// Суперблок
+        /// </summary>
         SuperBlock sb;
+        /// <summary>
+        /// Битовая карта инодов
+        /// </summary>
         BitMap bm_inode;
+        /// <summary>
+        /// Битовая карта блоков данных
+        /// </summary>
         BitMap bm_block;
+        /// <summary>
+        /// Файловый поток для записи/считывания данных
+        /// </summary>
         FileStream fs;
 
         /// <summary>
@@ -89,6 +101,10 @@ namespace S5FS
             return s5FS;
         }
 
+        /// <summary>
+        /// Стандартный метод записи/обновления битовой карты.
+        /// </summary>
+        /// <param name="map"></param>
         private void WriteBitMap(BitMap map)
         {
             var slicer = Helper.Slicer(map.map, this.sb.s_blen).GetEnumerator();
@@ -98,6 +114,12 @@ namespace S5FS
             }
         }
 
+        /// <summary>
+        /// Стандартный метод записи информации в блок данных. Нумерация с 0.
+        /// </summary>
+        /// <param name="bytes"></param>
+        /// <param name="num"></param>
+        /// <exception cref="ArgumentOutOfRangeException"></exception>
         private void WriteToDataBlock(byte[] bytes, UInt64 num)
         {
             if (bytes.LongLength != this.sb.s_blen)
@@ -111,6 +133,12 @@ namespace S5FS
             fs.Flush();
         }
 
+        /// <summary>
+        /// Перемещение по файловому потоку. Нужен, тк стандартный метод принимат максимум long.
+        /// </summary>
+        /// <param name="num"></param>
+        /// <param name="seekOrigin"></param>
+        /// <exception cref="Exception"></exception>
         private void Seek(UInt64 num, SeekOrigin seekOrigin)
         {
             if (seekOrigin is SeekOrigin.End)
@@ -126,6 +154,11 @@ namespace S5FS
             fs.Seek((Int32)num, SeekOrigin.Current);
         }
 
+        /// <summary>
+        /// Стандартный метод считывания информации из блока данных. Нумерация с 0.
+        /// </summary>
+        /// <param name="num"></param>
+        /// <returns></returns>
         private byte[] ReadFromDataBlock(UInt64 num)
         {
             byte[] bytes = new byte[(int)this.sb.s_blen];

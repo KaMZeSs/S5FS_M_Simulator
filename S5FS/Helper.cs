@@ -8,6 +8,12 @@ namespace S5FS
 {
     static class Helper
     {
+        /// <summary>
+        /// "Нарезает" входной массив на блоки одинаковой длины. Если последний блок - меньше, остаток заполняется нулями.
+        /// </summary>
+        /// <param name="main_array"></param>
+        /// <param name="block_size"></param>
+        /// <returns></returns>
         public static IEnumerable<byte[]> Slicer(byte[] main_array, UInt32 block_size)
         {
             byte[] result;
