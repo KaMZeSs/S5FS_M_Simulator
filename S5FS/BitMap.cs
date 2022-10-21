@@ -87,5 +87,22 @@ namespace S5FS
             bits.CopyTo(bytes, 0);
             return bytes[0];
         }
+
+
+        /// <summary>
+        /// Найти первый пустой блок/инод.
+        /// </summary>
+        /// <returns>Номер пустого блока/инода. 0 означает, что пустых блоков/инодов больше нет (так как нулевой блок/инод всегда использован системой)</returns>
+        public UInt64 FirstEmpty()
+        {
+            for (UInt64 i = 1; i < this.length; i++)
+            {
+                if (this.isBlockEmpty(i))
+                {
+                    return i;
+                }
+            }
+            return 0;
+        }
     }
 }

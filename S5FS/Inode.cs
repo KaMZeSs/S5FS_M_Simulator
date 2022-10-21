@@ -12,7 +12,7 @@ namespace S5FS
     /// </summary>
     internal class Inode
     {
-        const int inode_size = 144;
+        public const int inode_size = 144;
 
         /// <summary>
         /// Тип файла, права доступа тип|suid|sgid|stickyBit|rwx|rwx|rwx. 2 байта.
@@ -50,10 +50,15 @@ namespace S5FS
         /// Массив адресов дисковых блоков хранения данных. 13 элементов. 8*13 =  104 байт.
         /// </summary>
         public UInt64[] di_addr;
+        /// <summary>
+        /// Позиция в массиве инодов
+        /// </summary>
+        public UInt64 index;
 
-        public Inode()
+        public Inode(UInt64 num)
         {
             this.di_addr = new UInt64[13];
+            this.index = num;
         }
 
         /// <summary>
@@ -90,14 +95,14 @@ namespace S5FS
         /// <param name="array">Обрабатываемый массив.</param>
         /// <returns>Один инод.</returns>
         /// <exception cref="Exception"></exception>
-        public static Inode LoadFromByteArray(byte[] array)
+        public static Inode LoadFromByteArray(byte[] array, UInt64 num)
         {
             if (array.Length != inode_size)
             {
                 throw new Exception("Inode size must be 144 bytes");
             }
 
-            Inode inode = new();
+            Inode inode = new(num);
 
             inode.di_mode = BitConverter.ToUInt16(array, 0);
             inode.di_nlinks = BitConverter.ToUInt16(array, 2);

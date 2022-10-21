@@ -31,6 +31,11 @@ namespace S5FS
         FileStream fs;
 
         /// <summary>
+        /// Открытый в данный момент inode
+        /// </summary>
+        Inode inode;
+
+        /// <summary>
         /// Позиция самого первого блока относительно начала файла
         /// </summary>
         UInt64 blocks_offset;
@@ -242,5 +247,50 @@ namespace S5FS
 
             return bytes;
         }
+
+        /// <summary>
+        /// Считать i-й инод
+        /// </summary>
+        /// <param name="num"></param>
+        /// <returns></returns>
+        private Inode ReadInode(UInt64 num)
+        {
+            UInt64 position = SuperBlock.superblock_size + num * 144;
+            this.Seek(position, SeekOrigin.Begin);
+            var bytes = new byte[Inode.inode_size];
+            fs.Read(bytes, 0, Inode.inode_size);
+            return Inode.LoadFromByteArray(bytes, num);
+        }
+
+        /// <summary>
+        /// Перезаписать i-й инод
+        /// </summary>
+        /// <param name="inode"></param>
+        /// <param name="num"></param>
+        private void WriteInode(Inode inode)
+        {
+            UInt64 position = SuperBlock.superblock_size + inode.index * 144;
+            byte[] bytes = Inode.SaveToByteArray(inode);
+            this.Seek(position, SeekOrigin.Begin);
+            fs.Write(bytes, 0, bytes.Length);
+        }
+
+        private void CreateRootFolder()
+        {
+            var inode = new Inode(0)
+            {
+                di_mode = 0b_01_00_00_0_000_000_000, // Папка, остальное по нулям
+                di_nlinks = 1,
+                di_uid = 0,
+                di_gid = 0,
+                di_size = 0, // Нет, но пока да
+                di_atime = 0, // Текущее
+                di_mtime = 0, // Текущее
+                di_ctime = 0, // Текущее
+                di_addr = new ulong[0] // Получить первый свободный блок
+            };
+        }
+
+
     }
 }
