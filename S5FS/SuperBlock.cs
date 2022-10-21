@@ -40,7 +40,7 @@ namespace S5FS
         /// <summary>
         /// Размер логического блока. 4 байт.
         /// </summary>
-        public UInt32 s_blen;     
+        public UInt32 s_blen;
 
         public SuperBlock() { }    
 

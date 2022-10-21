@@ -122,8 +122,54 @@ namespace S5FS
             s5fs.fs.Read(bytes, 0, bytes.Length);
             s5fs.sb = SuperBlock.LoadFromByteArray(bytes);
 
-            //Продуктивность поделилась на 0
+            s5fs.blocks_offset = s5fs.sb.s_isize * 144 + SuperBlock.superblock_size;
 
+            //Подгрузить битмапы
+            //Иноды
+            UInt64 inode_bm_len = s5fs.sb.s_isize / 8;
+            if (s5fs.sb.s_isize % 8 != 0)
+            {
+                inode_bm_len++;
+            }
+            UInt64 blocks_to_read = inode_bm_len / s5fs.sb.s_blen;
+            if (inode_bm_len % s5fs.sb.s_blen != 0) 
+            {
+                blocks_to_read++;
+            }
+            List<byte> readed_bytes = new();
+
+            for (UInt64 i = 0; i < blocks_to_read; i++)
+            {
+                readed_bytes.AddRange(s5fs.ReadFromDataBlock(i));
+            }
+
+            bytes = new byte[inode_bm_len];
+            Array.Copy(readed_bytes.ToArray(), bytes, bytes.LongLength);
+
+            s5fs.bm_inode = new(bytes, inode_bm_len, 0);
+
+            //Битовая карта блоков
+            UInt64 bm_start = blocks_to_read;
+            UInt64 blocks_bm_len = (s5fs.sb.s_fsize - 2) / 8;
+            if ((s5fs.sb.s_fsize - 2) % 8 != 0) 
+            {
+                blocks_bm_len++;
+            }
+            blocks_to_read = blocks_bm_len / s5fs.sb.s_blen;
+            if (blocks_bm_len % s5fs.sb.s_blen != 0)
+            {
+                blocks_to_read++;
+            }
+            readed_bytes.Clear();
+
+            for (UInt64 i = bm_start; i < bm_start + blocks_to_read; i++)
+            {
+                readed_bytes.AddRange(s5fs.ReadFromDataBlock(i));
+            }
+            bytes = new byte[blocks_bm_len];
+            Array.Copy(readed_bytes.ToArray(), bytes, bytes.LongLength);
+
+            s5fs.bm_block = new(bytes, blocks_bm_len, bm_start);
 
             return s5fs;
         }

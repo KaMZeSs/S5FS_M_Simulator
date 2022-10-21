@@ -28,6 +28,13 @@ namespace S5FS
             this.start_block = start_block;
         }
 
+        public BitMap(byte[] array, ulong length, ulong start_block)
+        {
+            this.map = array;
+            this.length = length;
+            this.start_block = start_block;
+        }
+
         /// <summary>
         /// Проверка на занятость блока.
         /// </summary>

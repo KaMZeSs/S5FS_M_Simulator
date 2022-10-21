@@ -11,8 +11,9 @@ namespace S5FS
     {
         public static void Main()
         {
-            File.Delete("qwe");
-            var s5fs = S5FS.format("qwe", 2048, 5242880);        
+            var s5fs = S5FS.load_from_file("qwe");
+            //File.Delete("qwe");
+            //var s5fs = S5FS.format("qwe", 2048, 5242880);        
         }
     }
 }
