@@ -315,27 +315,100 @@ namespace S5FS
             this.WriteBitMap(bm_block);
         }
 
-        //TODO
+        
         public byte[] ReadDataByInode(Inode inode)
         {
             UInt64 block_num = inode.di_size % this.sb.s_blen == 0 ? 
                 inode.di_size / this.sb.s_blen :
                 (inode.di_size / this.sb.s_blen + 1);
-            // Я устал думать
-            // На самом деле я придумал
-            // Но я думал на столько долго, что оч не хочу это реализовывать
-            // Если я забуду, то
-            // Идти по всем блокам
-            // Т.е. сделать все 4 цикла
-            // 1. Просмотреть 10 первых
-            // 2. Просмотреть вложенную, достать адреса, просмотреть все, что есть первое
-            // 3. Просмотреть вложенный, взять первый, просмотреть, взять адреса, просмотреть все и так далее до второй
-            // 4. Аналогично
-            // Да, надо все прописать
-            // Но что поделаешь
-            // Зато это работает
-            // Просто, когда увидишь, что массив уже полон (размер-то известен), значит все данные считаны, а остальное - мусор
-            // И просто return
+
+            var last_len = (int)(inode.di_size % this.sb.s_blen); // Скок байт в ласт блоке. Можно в int, тк размер блока макс 64кб
+
+            var result = new byte[inode.di_size];
+            byte[] block = new byte[0];
+
+            
+            UInt64 block_counter = 0; // Общий счетчик блоков
+            try
+            {
+                for (UInt64 i = 0; i < 10 && block_counter < block_num; i++, block_counter++) // Первые 10 адресов
+                {
+                    var addr = inode.di_addr[i]; //Номер i-го блока
+                    block = this.ReadFromDataBlock(addr);
+                    block.CopyTo(result, (long)(block_counter * this.sb.s_blen));
+                }
+
+                //Получить некст адреса
+                block = this.ReadFromDataBlock(10);
+                var addresses_1 = this.GetAddresses(block);
+
+                for (long i = 0; i < addresses_1.LongLength && block_counter < block_num; i++, block_counter++) // Все адреса из блока 11
+                {
+                    var addr = addresses_1[i];
+                    block = this.ReadFromDataBlock(addr);
+                    block.CopyTo(result, (long)(block_counter * this.sb.s_blen));
+                }
+
+                //Получить список адресов в  11 блоке
+                block = this.ReadFromDataBlock(11); // Список адресов, указывающих на блоки со списком адресов
+                addresses_1 = this.GetAddresses(block);
+                for (long j = 0; j < addresses_1.LongLength && block_counter < block_num; j++)
+                {
+                    // Получаем адрес из каждого блока
+                    block = this.ReadFromDataBlock((ulong)j);
+                    var addresses_2 = this.GetAddresses(block);
+                    //Считываем каждый блок
+                    for (long i = 0; i < addresses_2.LongLength && block_counter < block_num; i++, block_counter++)
+                    {
+                        var addr = addresses_2[i];
+                        block = this.ReadFromDataBlock(addr);
+                        block.CopyTo(result, (long)(block_counter * this.sb.s_blen));
+                    }
+                }
+
+                //Получить список адресов в 12 блоке
+                block = this.ReadFromDataBlock(12); // Ну вы поняли
+                addresses_1 = this.GetAddresses(block);
+                for (long k = 0; k < addresses_1.LongLength && block_counter < block_num; k++)
+                {
+                    // Получаем адрес из каждого блока
+                    block = this.ReadFromDataBlock((ulong)k);
+                    var addresses_2 = this.GetAddresses(block);
+                    //Считываем каждый блок
+                    for (long j = 0; j < addresses_2.LongLength && block_counter < block_num; j++)
+                    {
+                        //Я устал
+                        // Получаем адрес из каждого блока
+                        block = this.ReadFromDataBlock((ulong)j);
+                        var addresses_3 = this.GetAddresses(block);
+                        //Считываем каждый блок
+                        for (long i = 0; i < addresses_3.LongLength && block_counter < block_num; i++, block_counter++)
+                        {
+                            var addr = addresses_3[i];
+                            block = this.ReadFromDataBlock(addr);
+                            block.CopyTo(result, (long)(block_counter * this.sb.s_blen));
+                        }
+                    }
+                }
+            }
+            catch (ArgumentOutOfRangeException) // Если Exception - значит ласт блок не влез
+            {
+                Array.Resize(ref block, last_len);
+                block.CopyTo(result, (long)(block_counter * this.sb.s_blen));
+            }
+
+            return result;
+        }
+
+        private UInt64[] GetAddresses(byte[] bytes)
+        {
+            var result = new UInt64[bytes.Length / 8];
+            var sliced = Helper.Slicer(bytes, 8).GetEnumerator();
+            for (int i = 0; sliced.MoveNext(); i++)
+            {
+                result[i] = BitConverter.ToUInt64(sliced.Current, 0);
+            }
+            return result;
         }
 
         //TODO

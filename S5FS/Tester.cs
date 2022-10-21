@@ -11,9 +11,15 @@ namespace S5FS
     {
         public static void Main()
         {
+            var array = new byte[] { 1, 2, 3, 4, 5, 6 };
+            var array2 = new byte[4];
+            array.CopyTo(array2, 0);
+            
+            
+            
             //var s5fs = S5FS.load_from_file("qwe");
             //File.Delete("qwe");
-            var s5fs = S5FS.format("qwe", 2048, 5242880);
+            //var s5fs = S5FS.format("qwe", 2048, 5242880);
         }
     }
 }
