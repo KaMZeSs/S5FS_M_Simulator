@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Security.AccessControl;
 using System.Text;
 using System.Threading.Tasks;
@@ -40,6 +41,11 @@ namespace S5FS
         /// </summary>
         UInt64 blocks_offset;
 
+        /// <summary>
+        /// Количество сохраняемых в блоке адресов
+        /// </summary>
+        UInt64 addr_in_block;
+
         private S5FS() { }
 
         /// <summary>
@@ -59,6 +65,9 @@ namespace S5FS
             byte[] buffer = SuperBlock.SaveToByteArray(s5FS.sb);
             s5FS.fs.Write(buffer);
             s5FS.fs.Flush();
+
+            //Скок в блок адресов влезет
+            s5FS.addr_in_block = s5FS.sb.s_blen / 8;
 
             //Выделить место под индексные
             buffer = new byte[s5FS.sb.s_isize * 144];
@@ -103,6 +112,8 @@ namespace S5FS
 
             s5FS.WriteBitMap(s5FS.bm_block);
 
+            s5FS.CreateRootFolder();
+
             return s5FS;
         }
 
@@ -128,6 +139,9 @@ namespace S5FS
             s5fs.sb = SuperBlock.LoadFromByteArray(bytes);
 
             s5fs.blocks_offset = s5fs.sb.s_isize * 144 + SuperBlock.superblock_size;
+
+            //Скок в блок адресов влезет
+            s5fs.addr_in_block = s5fs.sb.s_blen / 8;
 
             //Подгрузить битмапы
             //Иноды
@@ -287,10 +301,49 @@ namespace S5FS
                 di_atime = 0, // Текущее
                 di_mtime = 0, // Текущее
                 di_ctime = 0, // Текущее
-                di_addr = new ulong[0] // Получить первый свободный блок
+                di_addr = new ulong[13] // Получить первый свободный блок
             };
+            UInt64 block_num = this.bm_block.FirstEmpty();
+            inode.di_addr[0] = block_num;
+            inode.di_atime = inode.di_mtime = inode.di_ctime = DateTime.Now.ToBinary();
+            WriteInode(inode);
+
+            //Изменим карты
+            this.bm_inode.ChangeBlockState(0, false);
+            this.WriteBitMap(bm_inode);
+            this.bm_block.ChangeBlockState(block_num, false);
+            this.WriteBitMap(bm_block);
         }
 
+        //TODO
+        public byte[] ReadDataByInode(Inode inode)
+        {
+            UInt64 block_num = inode.di_size % this.sb.s_blen == 0 ? 
+                inode.di_size / this.sb.s_blen :
+                (inode.di_size / this.sb.s_blen + 1);
+            // Я устал думать
+            // На самом деле я придумал
+            // Но я думал на столько долго, что оч не хочу это реализовывать
+            // Если я забуду, то
+            // Идти по всем блокам
+            // Т.е. сделать все 4 цикла
+            // 1. Просмотреть 10 первых
+            // 2. Просмотреть вложенную, достать адреса, просмотреть все, что есть первое
+            // 3. Просмотреть вложенный, взять первый, просмотреть, взять адреса, просмотреть все и так далее до второй
+            // 4. Аналогично
+            // Да, надо все прописать
+            // Но что поделаешь
+            // Зато это работает
+            // Просто, когда увидишь, что массив уже полон (размер-то известен), значит все данные считаны, а остальное - мусор
+            // И просто return
+        }
 
+        //TODO
+        public void CreateFolder(String path)
+        {
+            String[] parts = path.Split('\\');
+            var root = this.ReadInode(0);
+            // Что-то похожее на чтение данных из инода
+        }
     }
 }

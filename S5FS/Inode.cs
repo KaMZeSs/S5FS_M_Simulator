@@ -37,15 +37,15 @@ namespace S5FS
         /// <summary>
         /// Время последнего доступа к файлу. 8 байт.
         /// </summary>
-        public UInt64 di_atime;
+        public Int64 di_atime;
         /// <summary>
         /// Время последней модификации. 8 байт.
         /// </summary>
-        public UInt64 di_mtime;
+        public Int64 di_mtime;
         /// <summary>
         /// Время последней модификации inode. 8 байт.
         /// </summary>
-        public UInt64 di_ctime;
+        public Int64 di_ctime;
         /// <summary>
         /// Массив адресов дисковых блоков хранения данных. 13 элементов. 8*13 =  104 байт.
         /// </summary>
@@ -109,9 +109,9 @@ namespace S5FS
             inode.di_uid = BitConverter.ToUInt16(array, 4);
             inode.di_gid = BitConverter.ToUInt16(array, 6);
             inode.di_size = BitConverter.ToUInt64(array, 8);
-            inode.di_atime = BitConverter.ToUInt64(array, 16);
-            inode.di_mtime = BitConverter.ToUInt64(array, 24);
-            inode.di_ctime = BitConverter.ToUInt64(array, 32);
+            inode.di_atime = BitConverter.ToInt64(array, 16);
+            inode.di_mtime = BitConverter.ToInt64(array, 24);
+            inode.di_ctime = BitConverter.ToInt64(array, 32);
 
 
             for (int i = 0, curr = 40; i < inode.di_addr.Length; i++, curr += 8)
