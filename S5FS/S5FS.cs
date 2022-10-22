@@ -32,11 +32,6 @@ namespace S5FS
         FileStream fs;
 
         /// <summary>
-        /// Открытый в данный момент inode
-        /// </summary>
-        Inode inode;
-
-        /// <summary>
         /// Позиция самого первого блока относительно начала файла
         /// </summary>
         UInt64 blocks_offset;
@@ -109,10 +104,15 @@ namespace S5FS
             {
                 s5FS.bm_block.ChangeBlockState(i, false);
             }
+            //Изменить в суперблоке к-во свободных блоков
+            s5FS.sb.s_tfree -= len; 
 
             s5FS.WriteBitMap(s5FS.bm_block);
 
             s5FS.CreateRootFolder();
+            //На корневой каталог - 1 инод и блок
+            s5FS.sb.s_tfree--;
+            s5FS.sb.s_tinode--;
 
             return s5FS;
         }
@@ -314,7 +314,6 @@ namespace S5FS
             this.bm_block.ChangeBlockState(block_num, false);
             this.WriteBitMap(bm_block);
         }
-
         
         public byte[] ReadDataByInode(Inode inode)
         {
@@ -340,9 +339,9 @@ namespace S5FS
 
                 //Получить некст адреса
                 block = this.ReadFromDataBlock(10);
-                var addresses_1 = this.GetAddresses(block);
+                var addresses_1 = this.GetAddressesFromBlock(block);
 
-                for (long i = 0; i < addresses_1.LongLength && block_counter < block_num; i++, block_counter++) // Все адреса из блока 11
+                for (long i = 0; i < addresses_1.LongLength && block_counter < block_num; i++, block_counter++) // Все адреса из блока 10
                 {
                     var addr = addresses_1[i];
                     block = this.ReadFromDataBlock(addr);
@@ -351,12 +350,12 @@ namespace S5FS
 
                 //Получить список адресов в  11 блоке
                 block = this.ReadFromDataBlock(11); // Список адресов, указывающих на блоки со списком адресов
-                addresses_1 = this.GetAddresses(block);
+                addresses_1 = this.GetAddressesFromBlock(block);
                 for (long j = 0; j < addresses_1.LongLength && block_counter < block_num; j++)
                 {
                     // Получаем адрес из каждого блока
                     block = this.ReadFromDataBlock((ulong)j);
-                    var addresses_2 = this.GetAddresses(block);
+                    var addresses_2 = this.GetAddressesFromBlock(block);
                     //Считываем каждый блок
                     for (long i = 0; i < addresses_2.LongLength && block_counter < block_num; i++, block_counter++)
                     {
@@ -368,19 +367,19 @@ namespace S5FS
 
                 //Получить список адресов в 12 блоке
                 block = this.ReadFromDataBlock(12); // Ну вы поняли
-                addresses_1 = this.GetAddresses(block);
+                addresses_1 = this.GetAddressesFromBlock(block);
                 for (long k = 0; k < addresses_1.LongLength && block_counter < block_num; k++)
                 {
                     // Получаем адрес из каждого блока
                     block = this.ReadFromDataBlock((ulong)k);
-                    var addresses_2 = this.GetAddresses(block);
+                    var addresses_2 = this.GetAddressesFromBlock(block);
                     //Считываем каждый блок
                     for (long j = 0; j < addresses_2.LongLength && block_counter < block_num; j++)
                     {
                         //Я устал
                         // Получаем адрес из каждого блока
                         block = this.ReadFromDataBlock((ulong)j);
-                        var addresses_3 = this.GetAddresses(block);
+                        var addresses_3 = this.GetAddressesFromBlock(block);
                         //Считываем каждый блок
                         for (long i = 0; i < addresses_3.LongLength && block_counter < block_num; i++, block_counter++)
                         {
@@ -400,7 +399,7 @@ namespace S5FS
             return result;
         }
 
-        private UInt64[] GetAddresses(byte[] bytes)
+        private UInt64[] GetAddressesFromBlock(byte[] bytes)
         {
             var result = new UInt64[bytes.Length / 8];
             var sliced = Helper.Slicer(bytes, 8).GetEnumerator();
@@ -411,12 +410,86 @@ namespace S5FS
             return result;
         }
 
+        private void CreateFile(String file, byte[] data)
+        {
+            var splitted = file.Split('\\');
+            for (int i = 0; i < splitted.Length - 1; i++) // -1 - тк последнее - название файла
+            {
+
+            }
+        }
+
         //TODO
-        public void CreateFolder(String path)
+        public void CreateFolder(String path, String name)
         {
             String[] parts = path.Split('\\');
-            var root = this.ReadInode(0);
-            // Что-то похожее на чтение данных из инода
+            var last_Inode = this.ReadInode(0);
+            var inode_bytes = this.ReadDataByInode(last_Inode);
+            var files_in_last_inode = GetFilesFromFolderData(inode_bytes);
+
+            foreach (var part in parts) //Нахождение последнего inode в пути
+            {
+                var items = from fold in files_in_last_inode 
+                            where fold.Value == part select fold; // Может быть только одно имя, либо ничего
+                if (items.Count() is 0)
+                {
+                    throw new Exception($"Папка @{part}@ не существует");
+                }
+                var item = items.First();
+                // Проверка, что item - не файл
+                last_Inode = this.ReadInode(item.Key);
+                var type = Inode.GetInodeType(last_Inode);
+                if (type is InodeTypeEnum.File) 
+                {
+                    throw new Exception($"Папка @{part}@ не существует");
+                }
+                // Если дошли сюда, значит проверка на папку пройдена
+                // Выполняем те же действия, что и перед циклом
+                inode_bytes = this.ReadDataByInode(last_Inode);
+                files_in_last_inode = GetFilesFromFolderData(inode_bytes);
+            }
+            // Тут, если найдена последняя папка
+            // Проверка на наличие в ней файла/папки с нужныи именем файла
+            var check = from fold in files_in_last_inode
+                        where fold.Value == name
+                        select fold;
+            if (check.Count() is not 0) 
+            {
+                throw new Exception($"В данной папке уже имеется файл/папка с именем {name}");
+            }
+
+
+            //Нужно записать фул пустой блок, чтобы мусора не было
+        }
+
+        //Папка будет 64 байта - 8 на адрес инода, остальное - имя
+        private KeyValuePair<UInt64, String>[] GetFilesFromFolderData(byte[] data)
+        {
+            var files = new List<KeyValuePair<UInt64, String>>();
+            var splitted = Helper.Slicer(data, 64).GetEnumerator();
+            while (splitted.MoveNext())
+            {
+                var id = BitConverter.ToUInt64(splitted.Current, 0);
+                var name = BitConverter.ToString(splitted.Current, 8);
+                files.Add(new(id, name));
+            }
+            var existing_files = from file in files where file.Key != 0 select file; // онли существующие
+            return existing_files.ToArray();
+        }
+
+        private byte[] DictToFolderData(KeyValuePair<UInt64, String>[] files)
+        {
+            var bytes = new List<byte>();
+
+            for (long i = 0; i < files.Count(); i++)
+            {
+                var id = BitConverter.GetBytes(files[i].Key);
+                var value = Encoding.Unicode.GetBytes(files[i].Value);
+                bytes.AddRange(id);
+                bytes.AddRange(value);
+            }
+
+            return bytes.ToArray();
         }
     }
 }

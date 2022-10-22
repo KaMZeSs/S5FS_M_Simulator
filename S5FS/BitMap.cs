@@ -104,5 +104,19 @@ namespace S5FS
             }
             return 0;
         }
+
+        public UInt64[] GetNEmpty(UInt64 num)
+        {
+            var adresses = new UInt64[num];
+            for (UInt64 i = 1, counter = 0; i < this.length && counter < num; i++)
+            {
+                if (this.isBlockEmpty(i))
+                {
+                    adresses[counter++] = i;
+                }
+            }
+            
+            return adresses;
+        }
     }
 }

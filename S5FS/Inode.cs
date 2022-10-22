@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -120,6 +121,28 @@ namespace S5FS
             }
 
             return inode;
+        }
+
+        public static InodeTypeEnum GetInodeType(Inode inode)
+        {
+            var bytes = BitConverter.GetBytes(inode.di_mode);
+            BitArray bitArray = new BitArray(bytes);
+            var a = bitArray[bitArray.Length - 1];
+            var b = bitArray[bitArray.Length - 2];
+
+            if (a is false && b is false)
+            {
+                return InodeTypeEnum.Empty;
+            }
+            if (a is false && b is true)
+            {
+                return InodeTypeEnum.Folder;
+            }
+            if (a is true && b is false)
+            {
+                return InodeTypeEnum.File;
+            }
+            return InodeTypeEnum.Empty;
         }
     }
 }
