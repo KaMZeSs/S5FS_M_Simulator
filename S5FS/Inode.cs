@@ -11,12 +11,12 @@ namespace S5FS
     /// <summary>
     /// Вес: 144 байта
     /// </summary>
-    internal class Inode
+    internal class Inode : ICloneable
     {
         public const int inode_size = 144;
 
         /// <summary>
-        /// Тип файла, права доступа тип|suid|sgid|stickyBit|rwx|rwx|rwx. 2 байта.
+        /// Тип файла, права доступа тип|rwx|rwx|rwx|reserv5bit. 2 байта.
         /// </summary>
         public UInt16 di_mode;
         /// <summary>
@@ -60,6 +60,11 @@ namespace S5FS
         {
             this.di_addr = new UInt64[13];
             this.index = num;
+        }
+
+        public object Clone()
+        {
+            return this.MemberwiseClone();
         }
 
         /// <summary>

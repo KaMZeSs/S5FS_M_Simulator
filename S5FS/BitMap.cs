@@ -11,7 +11,7 @@ namespace S5FS
     /// Массив байт, который содержит о свободных/занятых блоках/кластерах. Для определения, что iй блок пуст/заполнен, необходимо проанализировать iй бит.
     /// Содержится в n-ом к-ве первых кластеров. Данные кластеры входят в карту.
     /// </summary>
-    internal class BitMap 
+    internal class BitMap : ICloneable
     {
         /// <summary>
         /// Битовая карта
@@ -34,6 +34,12 @@ namespace S5FS
             this.length = length;
             this.start_block = start_block;
         }
+
+        public object Clone()
+        {
+            return this.MemberwiseClone();
+        }
+
 
         /// <summary>
         /// Проверка на занятость блока.
@@ -93,27 +99,47 @@ namespace S5FS
         /// Найти первый пустой блок/инод.
         /// </summary>
         /// <returns>Номер пустого блока/инода. 0 означает, что пустых блоков/инодов больше нет (так как нулевой блок/инод всегда использован системой)</returns>
+        /// <exception cref="Exception"></exception>
         public UInt64 FirstEmpty()
         {
             for (UInt64 i = 1; i < this.length; i++)
             {
                 if (this.isBlockEmpty(i))
                 {
+                    this.ChangeBlockState(i, false);
                     return i;
                 }
             }
-            return 0;
+            throw new Exception($"Not enough empty space");
         }
 
+        /// <summary>
+        /// Получение num-количества пустых блоков
+        /// </summary>
+        /// <param name="num"></param>
+        /// <returns></returns>
+        /// /// <exception cref="Exception"></exception>
         public UInt64[] GetNEmpty(UInt64 num)
         {
             var adresses = new UInt64[num];
-            for (UInt64 i = 1, counter = 0; i < this.length && counter < num; i++)
+            UInt64 counter = 0;
+            for (UInt64 i = 1; i < this.length && counter < num; i++)
             {
                 if (this.isBlockEmpty(i))
                 {
-                    adresses[counter++] = i;
+                    this.ChangeBlockState(i, false);
+                    adresses[counter] = i;
+                    counter++;
                 }
+            }
+
+            if (counter != num - 1)
+            {
+                for (UInt64 i = 0; i < counter; i++)
+                {
+                    this.ChangeBlockState(adresses[i], true);
+                }
+                throw new Exception($"Not enough empty space");
             }
             
             return adresses;
