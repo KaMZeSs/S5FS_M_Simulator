@@ -13,10 +13,9 @@ namespace S5FS
     {
         public static void Main()
         {
-            var s5fs = S5FS.format("qwe", 2048, 5242880);
-            s5fs.CreateFile("", "qwe", false);
-            s5fs.CreateFile("", "qwe2", false);
-            
+            //var s5fs = S5FS.format("qwe", 2048, 5242880);
+            //s5fs.CreateFile("", "qwe", false);
+            //s5fs.CreateFile("", "qwe2", false);
         }
     }
 }

@@ -44,7 +44,7 @@ namespace S5FS
         /// </summary>
         public Int64 di_mtime;
         /// <summary>
-        /// Теперь это время последнего доступа
+        /// Теперь это время создания.
         /// Время последней модификации inode. 8 байт.
         /// </summary>
         public Int64 di_ctime;
