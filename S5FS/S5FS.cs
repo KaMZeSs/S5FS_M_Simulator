@@ -329,7 +329,7 @@ namespace S5FS
         /// </summary>
         /// <param name="inode"></param>
         /// <returns></returns>
-        public byte[] ReadDataByInode(Inode inode)
+        private byte[] ReadDataByInode(Inode inode)
         {
             UInt64 block_num = inode.di_size % this.sb.s_blen == 0 ? 
                 inode.di_size / this.sb.s_blen :
@@ -410,6 +410,8 @@ namespace S5FS
                 block.CopyTo(result, (long)(block_counter * this.sb.s_blen));
             }
 
+            inode.di_atime = DateTime.Now.ToBinary();
+
             return result;
         }
 
@@ -450,16 +452,19 @@ namespace S5FS
         /// <param name="inode"></param>
         /// <param name="newData"></param>
         /// <exception cref="Exception"></exception>
-        public void WriteDataByInode(Inode inode, byte[] newData)
+        private void WriteDataByInode(Inode inode, byte[] newData)
         {
             UInt64 block_num = inode.di_size % this.sb.s_blen == 0 ?
                 inode.di_size / this.sb.s_blen :
                 (inode.di_size / this.sb.s_blen + 1);
+            if (block_num is 0) block_num = 1;
             UInt64 new_block_num = (ulong)(newData.LongLength % this.sb.s_blen == 0 ?
                 newData.LongLength / this.sb.s_blen :
                 (newData.LongLength / this.sb.s_blen + 1));
 
             UInt64 addresses_in_block = this.sb.s_blen / 8;
+
+            inode.di_atime = DateTime.Now.ToBinary();
 
             var bm_copy = (BitMap)this.bm_block.Clone();
             var inode_bm_copy = (BitMap)this.bm_inode.Clone();
@@ -748,85 +753,21 @@ namespace S5FS
 
             //Если все ок - можно записать новый инод и карты на диск
             inode.di_size = (UInt64)newData.LongLength;
+
+            inode.di_mtime = DateTime.Now.ToBinary();
+
             this.WriteInode(inode);
             this.WriteBitMap(this.bm_inode);
             this.WriteBitMap(this.bm_block);
         }
 
-        //TODO
-        //private void WriteData(Inode inode, byte[] data)
-        //{
-        //    UInt64 new_block_num = (ulong)(data.LongLength % this.sb.s_blen == 0 ?
-        //        data.LongLength / this.sb.s_blen :
-        //        (data.LongLength / this.sb.s_blen + 1));
-
-        //    var saved_bm = (BitMap)this.bm_block.Clone();
-
-        //    if (new_block_num <= 10) // 0й уровень адресации
-        //    {
-        //        for (UInt64 i = 0; i < new_block_num; i++)
-        //        {
-        //            addresses_to_write_data.Add(inode.di_addr[i]);
-        //        }
-        //    }
-        //    if (new_block_num > 10 && new_block_num < 10 + addresses_in_block) // 1й уровень адресации
-        //    {
-        //        UInt64 counter = 0;
-        //        for (UInt64 i = 0; i < 10; i++, counter++)
-        //        {
-        //            addresses_to_write_data.Add(inode.di_addr[i]);
-        //        }
-        //        var first = GetAddressesFromBlock(ReadFromDataBlock(inode.di_addr[10]));
-        //        for (UInt64 i = 0; counter < new_block_num; i++, counter++)
-        //        {
-        //            addresses_to_write_data.Add(first[i]);
-        //        }
-        //    }
-        //    if (new_block_num > 10 + addresses_in_block && new_block_num < 10 + addresses_in_block * addresses_in_block) // 2й уровень адресации
-        //    {
-        //        UInt64 counter = 0;
-        //        for (UInt64 i = 0; i < 10; i++, counter++)
-        //        {
-        //            addresses_to_write_data.Add(inode.di_addr[i]);
-        //        }
-        //        var first = GetAddressesFromBlock(ReadFromDataBlock(inode.di_addr[10]));
-        //        for (UInt64 i = 0; i < (ulong)first.LongLength; i++, counter++)
-        //        {
-        //            addresses_to_write_data.Add(first[i]);
-        //        }
-        //        var second = GetAddressesFromBlock(ReadFromDataBlock(inode.di_addr[11]));
-        //        for (UInt64 i = 0; counter < new_block_num; i++, counter++)
-        //        {
-        //            addresses_to_write_data.Add(second[i]);
-        //        }
-        //    }
-        //    if (new_block_num > 10 + addresses_in_block * addresses_in_block && new_block_num < 10 + addresses_in_block * addresses_in_block * addresses_in_block) // 3й уровень адресации
-        //    {
-        //        UInt64 counter = 0;
-        //        for (UInt64 i = 0; i < 10; i++, counter++)
-        //        {
-        //            addresses_to_write_data.Add(inode.di_addr[i]);
-        //        }
-        //        var first = GetAddressesFromBlock(ReadFromDataBlock(inode.di_addr[10]));
-        //        for (UInt64 i = 0; i < (ulong)first.LongLength; i++, counter++)
-        //        {
-        //            addresses_to_write_data.Add(first[i]);
-        //        }
-        //        var second = GetAddressesFromBlock(ReadFromDataBlock(inode.di_addr[11]));
-        //        for (UInt64 i = 0; i < (ulong)second.LongLength; i++, counter++)
-        //        {
-        //            addresses_to_write_data.Add(second[i]);
-        //        }
-        //        var third = GetAddressesFromBlock(ReadFromDataBlock(inode.di_addr[12]));
-        //        for (UInt64 i = 0; counter < new_block_num; i++, counter++)
-        //        {
-        //            addresses_to_write_data.Add(third[i]);
-        //        }
-        //    }
-        //}
-        
-        //TODO
-        public void CreateFolder(String path, String name)
+        /// <summary>
+        /// Возможно рабочий метод создания папки
+        /// </summary>
+        /// <param name="path"></param>
+        /// <param name="name"></param>
+        /// <exception cref="Exception"></exception>
+        public Inode CreateFile(String path, String name, bool isFolder = false)
         {
             String[] parts = path.Split('\\');
             var last_Inode = this.ReadInode(0);
@@ -864,15 +805,29 @@ namespace S5FS
                 throw new Exception($"В данной папке уже имеется файл/папка с именем {name}");
             }
             //Получение номера свободного Inode
+            if (this.sb.s_tinode == 0)
+            {
+                throw new Exception();
+            }
             var inode_num = this.bm_inode.FirstEmpty();
+            this.sb.s_tinode--;
             //Получение номера свободного блока
+            if (this.sb.s_tfree == 0)
+            {
+                throw new Exception();
+            }
             var block_num = this.bm_block.FirstEmpty();
+            this.sb.s_tfree--;
+
             //Если дошли сюда, значит есть свободные блоки/инод
             long time = DateTime.Now.ToBinary();
+
+            ushort di_mode = (ushort)(isFolder ? 0b01_111_101_100_00000 : 0b10_111_101_100_00000); // Надо бы еще и пользователей/группы прикрутить
+
             var inode = new Inode(inode_num)
             {
-                di_mode = 0b01_111_101_100_00000,
-                di_nlinks = 1,
+                di_mode = di_mode,
+                di_nlinks = 0,
                 di_uid = curr_user_id,
                 di_gid = curr_group_id,
                 di_size = 0,
@@ -894,6 +849,9 @@ namespace S5FS
             this.WriteToDataBlock(new byte[this.sb.s_blen], block_num);
 
             //Запишем инфу о папке в родительскую папку
+            this.AddFileLinkToDirectory(last_Inode, inode, name);
+
+            return inode;
         }
 
         /// <summary>
@@ -902,7 +860,7 @@ namespace S5FS
         /// </summary>
         /// <param name="data"></param>
         /// <returns></returns>
-        private KeyValuePair<UInt64, String>[] GetFilesFromFolderData(byte[] data)
+        public KeyValuePair<UInt64, String>[] GetFilesFromFolderData(byte[] data)
         {
             var files = new List<KeyValuePair<UInt64, String>>();
             var splitted = Helper.Slicer(data, 64).GetEnumerator();
@@ -951,6 +909,9 @@ namespace S5FS
             parent_inode_bytes = this.DictToFolderData(files_in_parent_inode.ToArray());
             //Размер мог стать больше предыдущего к-ва кластеров
             this.WriteDataByInode(folder, parent_inode_bytes);
+            newFile.di_nlinks++;
         }
+
+        
     }
 }
