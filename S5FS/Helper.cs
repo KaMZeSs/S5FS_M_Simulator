@@ -37,5 +37,19 @@ namespace S5FS
                 }
             }
         }
+
+        public static String StringExtender(String str, int prefer_size)
+        {
+            if (str.Length != prefer_size)
+            {
+                var list = str.ToList();
+                while (list.Count != prefer_size)
+                {
+                    list.Add(' ');
+                }
+                str = new string(list.ToArray());
+            }
+            return str;
+        }
     }
 }

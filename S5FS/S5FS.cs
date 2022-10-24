@@ -138,7 +138,7 @@ namespace S5FS
         /// </summary>
         /// <param name="inode"></param>
         /// <param name="num"></param>
-        private void WriteInode(Inode inode)
+        public void WriteInode(Inode inode)
         {
             UInt64 position = SuperBlock.superblock_size + inode.index * 144;
             byte[] bytes = Inode.SaveToByteArray(inode);
@@ -168,7 +168,7 @@ namespace S5FS
             inode.di_atime = inode.di_mtime = inode.di_ctime = DateTime.Now.ToBinary();
             WriteInode(inode);
             //Блок не очищаю, тк в нашем случае все пусто
-
+            
             //Изменим карты
             this.bm_inode.ChangeBlockState(0, false);
             this.WriteBitMap(bm_inode);
@@ -186,8 +186,10 @@ namespace S5FS
             UInt64 block_num = inode.di_size % this.sb.s_blen == 0 ? 
                 inode.di_size / this.sb.s_blen :
                 (inode.di_size / this.sb.s_blen + 1);
+            if (block_num is 0) block_num = 1;
 
             var last_len = (int)(inode.di_size % this.sb.s_blen); // Скок байт в ласт блоке. Можно в int, тк размер блока макс 64кб
+            if (inode.di_size is 0) last_len = 0;
 
             var result = new byte[inode.di_size];
             byte[] block = new byte[0];
@@ -256,7 +258,7 @@ namespace S5FS
                     }
                 }
             }
-            catch (ArgumentOutOfRangeException) // Если Exception - значит ласт блок не влез
+            catch (Exception) // Если Exception - значит ласт блок не влез
             {
                 Array.Resize(ref block, last_len);
                 block.CopyTo(result, (long)(block_counter * this.sb.s_blen));
@@ -299,321 +301,6 @@ namespace S5FS
         }
 
         /// <summary>
-        /// Возможно рабочий метод записи/перезаписи/добавления инфы по иноду
-        /// </summary>
-        /// <param name="inode"></param>
-        /// <param name="newData"></param>
-        /// <exception cref="Exception"></exception>
-        private void WriteDataByInode(Inode inode, byte[] newData)
-        {
-            UInt64 block_num = inode.di_size % this.sb.s_blen == 0 ?
-                inode.di_size / this.sb.s_blen :
-                (inode.di_size / this.sb.s_blen + 1);
-            if (block_num is 0) block_num = 1;
-            UInt64 new_block_num = (ulong)(newData.LongLength % this.sb.s_blen == 0 ?
-                newData.LongLength / this.sb.s_blen :
-                (newData.LongLength / this.sb.s_blen + 1));
-
-            UInt64 addresses_in_block = this.sb.s_blen / 8;
-
-            inode.di_atime = DateTime.Now.ToBinary();
-
-            var bm_copy = (BitMap)this.bm_block.Clone();
-            var inode_bm_copy = (BitMap)this.bm_inode.Clone();
-            var inode_copy = (Inode)inode.Clone();
-
-            List<UInt64> addresses_to_write_data = new();
-
-            if (new_block_num == block_num) // Не нужно выделять новые блоки
-            {
-                if (new_block_num <= 10) // 0й уровень адресации
-                {
-                    for (UInt64 i = 0; i < new_block_num; i++)
-                    {
-                        addresses_to_write_data.Add(inode.di_addr[i]);
-                    }
-                }
-                if (new_block_num > 10 && new_block_num < 10 + addresses_in_block) // 1й уровень адресации
-                {
-                    UInt64 counter = 0;
-                    for (UInt64 i = 0; i < 10; i++, counter++)
-                    {
-                        addresses_to_write_data.Add(inode.di_addr[i]);
-                    }
-                    var first = GetAddressesFromBlock(ReadFromDataBlock(inode.di_addr[10]));
-                    for (UInt64 i = 0; counter < new_block_num; i++, counter++)
-                    {
-                        addresses_to_write_data.Add(first[i]);
-                    }
-                }
-                if (new_block_num > 10 + addresses_in_block && new_block_num < 10 + addresses_in_block * addresses_in_block) // 2й уровень адресации
-                {
-                    UInt64 counter = 0;
-                    for (UInt64 i = 0; i < 10; i++, counter++)
-                    {
-                        addresses_to_write_data.Add(inode.di_addr[i]);
-                    }
-                    var first = GetAddressesFromBlock(ReadFromDataBlock(inode.di_addr[10]));
-                    for (UInt64 i = 0; i < (ulong)first.LongLength; i++, counter++)
-                    {
-                        addresses_to_write_data.Add(first[i]);
-                    }
-                    var second = GetAddressesFromBlock(ReadFromDataBlock(inode.di_addr[11]));
-                    for (UInt64 i = 0; counter < new_block_num; i++, counter++)
-                    {
-                        addresses_to_write_data.Add(second[i]);
-                    }
-                }
-                if (new_block_num > 10 + addresses_in_block * addresses_in_block && new_block_num < 10 + addresses_in_block * addresses_in_block * addresses_in_block) // 3й уровень адресации
-                {
-                    UInt64 counter = 0;
-                    for (UInt64 i = 0; i < 10; i++, counter++)
-                    {
-                        addresses_to_write_data.Add(inode.di_addr[i]);
-                    }
-                    var first = GetAddressesFromBlock(ReadFromDataBlock(inode.di_addr[10]));
-                    for (UInt64 i = 0; i < (ulong)first.LongLength; i++, counter++)
-                    {
-                        addresses_to_write_data.Add(first[i]);
-                    }
-                    var second = GetAddressesFromBlock(ReadFromDataBlock(inode.di_addr[11]));
-                    for (UInt64 i = 0; i < (ulong)second.LongLength; i++, counter++)
-                    {
-                        addresses_to_write_data.Add(second[i]);
-                    }
-                    var third = GetAddressesFromBlock(ReadFromDataBlock(inode.di_addr[12]));
-                    for (UInt64 i = 0; counter < new_block_num; i++, counter++)
-                    {
-                        addresses_to_write_data.Add(third[i]);
-                    }
-                }
-            }
-            else if (new_block_num < block_num) // Нужно освободить некоторые //Аналогично предыдущему, но уменьшить размер
-            {
-                if (new_block_num <= 10) // 0й уровень адресации
-                {
-                    for (UInt64 i = 0; i < new_block_num; i++)
-                    {
-                        addresses_to_write_data.Add(inode.di_addr[i]);
-                    }
-                }
-                if (new_block_num > 10 && new_block_num < 10 + addresses_in_block) // 1й уровень адресации
-                {
-                    UInt64 counter = 0;
-                    for (UInt64 i = 0; i < 10; i++, counter++)
-                    {
-                        addresses_to_write_data.Add(inode.di_addr[i]);
-                    }
-                    var first = GetAddressesFromBlock(ReadFromDataBlock(inode.di_addr[10]));
-                    for (UInt64 i = 0; counter < new_block_num; i++, counter++)
-                    {
-                        addresses_to_write_data.Add(first[i]);
-                    }
-                }
-                if (new_block_num > 10 + addresses_in_block && new_block_num < 10 + addresses_in_block * addresses_in_block) // 2й уровень адресации
-                {
-                    UInt64 counter = 0;
-                    for (UInt64 i = 0; i < 10; i++, counter++)
-                    {
-                        addresses_to_write_data.Add(inode.di_addr[i]);
-                    }
-                    var first = GetAddressesFromBlock(ReadFromDataBlock(inode.di_addr[10]));
-                    for (UInt64 i = 0; i < (ulong)first.LongLength; i++, counter++)
-                    {
-                        addresses_to_write_data.Add(first[i]);
-                    }
-                    var second = GetAddressesFromBlock(ReadFromDataBlock(inode.di_addr[11]));
-                    for (UInt64 i = 0; counter < new_block_num; i++, counter++)
-                    {
-                        addresses_to_write_data.Add(second[i]);
-                    }
-                }
-                if (new_block_num > 10 + addresses_in_block * addresses_in_block && new_block_num < 10 + addresses_in_block * addresses_in_block * addresses_in_block) // 3й уровень адресации
-                {
-                    UInt64 counter = 0;
-                    for (UInt64 i = 0; i < 10; i++, counter++)
-                    {
-                        addresses_to_write_data.Add(inode.di_addr[i]);
-                    }
-                    var first = GetAddressesFromBlock(ReadFromDataBlock(inode.di_addr[10]));
-                    for (UInt64 i = 0; i < (ulong)first.LongLength; i++, counter++)
-                    {
-                        addresses_to_write_data.Add(first[i]);
-                    }
-                    var second = GetAddressesFromBlock(ReadFromDataBlock(inode.di_addr[11]));
-                    for (UInt64 i = 0; i < (ulong)second.LongLength; i++, counter++)
-                    {
-                        addresses_to_write_data.Add(second[i]);
-                    }
-                    var third = GetAddressesFromBlock(ReadFromDataBlock(inode.di_addr[12]));
-                    for (UInt64 i = 0; counter < new_block_num; i++, counter++)
-                    {
-                        addresses_to_write_data.Add(third[i]);
-                    }
-                }
-                addresses_to_write_data.Reverse();
-                addresses_to_write_data.RemoveRange((int)new_block_num, (int)(block_num - new_block_num));
-                addresses_to_write_data.Reverse();
-            }
-            else // Нужно выделить новые // Аналогично первому, но считать по block_num и добавить еще
-            {
-                if (block_num <= 10) // 0й уровень адресации
-                {
-                    for (UInt64 i = 0; i < block_num; i++)
-                    {
-                        addresses_to_write_data.Add(inode.di_addr[i]);
-                    }
-                    if (block_num == 10) //Нужно начать второй уровень адресации
-                    {
-                        inode.di_addr[10] = this.bm_block.FirstEmpty();
-                        var newAddr = this.bm_block.FirstEmpty();
-                        var block = AddressesToBlock(new ulong[] { newAddr });
-                        this.WriteToDataBlock(block, inode.di_addr[10]);
-                        addresses_to_write_data.Add(newAddr);
-                    }
-                    else // Влезаем в старый
-                    {
-                        inode.di_addr[block_num] = this.bm_block.FirstEmpty();
-                        var newAddr = this.bm_block.FirstEmpty();
-                        var block = AddressesToBlock(new ulong[] { newAddr });
-                        this.WriteToDataBlock(block, inode.di_addr[block_num]);
-                        addresses_to_write_data.Add(newAddr);
-                    }
-                }
-                if (block_num > 10 && block_num < 10 + addresses_in_block) // 1й уровень адресации
-                {
-                    UInt64 counter = 0;
-                    for (UInt64 i = 0; i < 10; i++, counter++)
-                    {
-                        addresses_to_write_data.Add(inode.di_addr[i]);
-                    }
-                    var first = GetAddressesFromBlock(ReadFromDataBlock(inode.di_addr[10]));
-                    for (UInt64 i = 0; counter < block_num; i++, counter++)
-                    {
-                        addresses_to_write_data.Add(first[i]);
-                    }
-                    if (block_num == 10 + addresses_in_block) // Новый уровень адресации
-                    {
-                        inode.di_addr[11] = this.bm_block.FirstEmpty();
-                        var newAddr = this.bm_block.FirstEmpty();
-                        var block = AddressesToBlock(new ulong[] { newAddr });
-                        this.WriteToDataBlock(block, inode.di_addr[11]);
-                        addresses_to_write_data.Add(newAddr);
-                    }
-                    else // Старый
-                    {
-                        var old_addresses = this.GetAddressesFromBlock(this.ReadFromDataBlock(inode.di_addr[10]));
-                        var newAddr = this.bm_block.FirstEmpty();
-                        var vs = old_addresses.ToList();
-                        vs.Add(newAddr);
-                        var new_addresses = vs.ToArray();
-                        var block = this.AddressesToBlock(new_addresses);
-                        this.WriteToDataBlock(block, inode.di_addr[10]);
-                        addresses_to_write_data.Add(newAddr);
-                    }
-                }
-                if (block_num > 10 + addresses_in_block && block_num < 10 + addresses_in_block * addresses_in_block) // 2й уровень адресации
-                {
-                    UInt64 counter = 0;
-                    for (UInt64 i = 0; i < 10; i++, counter++)
-                    {
-                        addresses_to_write_data.Add(inode.di_addr[i]);
-                    }
-                    var first = GetAddressesFromBlock(ReadFromDataBlock(inode.di_addr[10]));
-                    for (UInt64 i = 0; i < (ulong)first.LongLength; i++, counter++)
-                    {
-                        addresses_to_write_data.Add(first[i]);
-                    }
-                    var second = GetAddressesFromBlock(ReadFromDataBlock(inode.di_addr[11]));
-                    for (UInt64 i = 0; counter < block_num; i++, counter++)
-                    {
-                        addresses_to_write_data.Add(second[i]);
-                    }
-                    if (block_num == 10 + addresses_in_block * addresses_in_block) // Новый уровень адресации
-                    {
-                        inode.di_addr[12] = this.bm_block.FirstEmpty();
-                        var newAddr = this.bm_block.FirstEmpty();
-                        var block = AddressesToBlock(new ulong[] { newAddr });
-                        this.WriteToDataBlock(block, inode.di_addr[12]);
-                        addresses_to_write_data.Add(newAddr);
-                    }
-                    else // Старый
-                    {
-                        var old_addresses = this.GetAddressesFromBlock(this.ReadFromDataBlock(inode.di_addr[11]));
-                        var newAddr = this.bm_block.FirstEmpty();
-                        var vs = old_addresses.ToList();
-                        vs.Add(newAddr);
-                        var new_addresses = vs.ToArray();
-                        var block = this.AddressesToBlock(new_addresses);
-                        this.WriteToDataBlock(block, inode.di_addr[11]);
-                        addresses_to_write_data.Add(newAddr);
-                    }
-                }
-                if (block_num > 10 + addresses_in_block * addresses_in_block && block_num < 10 + addresses_in_block * addresses_in_block * addresses_in_block) // 3й уровень адресации
-                {
-                    UInt64 counter = 0;
-                    for (UInt64 i = 0; i < 10; i++, counter++)
-                    {
-                        addresses_to_write_data.Add(inode.di_addr[i]);
-                    }
-                    var first = GetAddressesFromBlock(ReadFromDataBlock(inode.di_addr[10]));
-                    for (UInt64 i = 0; i < (ulong)first.LongLength; i++, counter++)
-                    {
-                        addresses_to_write_data.Add(first[i]);
-                    }
-                    var second = GetAddressesFromBlock(ReadFromDataBlock(inode.di_addr[11]));
-                    for (UInt64 i = 0; i < (ulong)second.LongLength; i++, counter++)
-                    {
-                        addresses_to_write_data.Add(second[i]);
-                    }
-                    var third = GetAddressesFromBlock(ReadFromDataBlock(inode.di_addr[12]));
-                    for (UInt64 i = 0; counter < block_num; i++, counter++)
-                    {
-                        addresses_to_write_data.Add(third[i]);
-                    }
-                    if (block_num == 10 + addresses_in_block * addresses_in_block) // Новый уровень адресации уже не влезает
-                    {
-                        this.bm_block = bm_copy;
-                        this.bm_inode = inode_bm_copy;
-                        inode = inode_copy;
-                        throw new Exception("Too large file for inode");
-                    }
-                    else // Старый
-                    {
-                        var old_addresses = this.GetAddressesFromBlock(this.ReadFromDataBlock(inode.di_addr[12]));
-                        var newAddr = this.bm_block.FirstEmpty();
-                        var vs = old_addresses.ToList();
-                        vs.Add(newAddr);
-                        var new_addresses = vs.ToArray();
-                        var block = this.AddressesToBlock(new_addresses);
-                        this.WriteToDataBlock(block, inode.di_addr[12]);
-                        addresses_to_write_data.Add(newAddr);
-                    }
-                }
-            }
-
-            //Если дошли сюда - знаем все адреса, куда надо записать информацию
-
-            var enumer = Helper.Slicer(newData, this.sb.s_blen).GetEnumerator();
-
-            var arr = addresses_to_write_data.ToArray();
-
-            for (UInt64 i = 0; enumer.MoveNext(); i++)
-            {
-                this.WriteToDataBlock(enumer.Current, arr[i]);
-            }
-
-            //Если все ок - можно записать новый инод и карты на диск
-            inode.di_size = (UInt64)newData.LongLength;
-
-            inode.di_mtime = DateTime.Now.ToBinary();
-
-            this.WriteInode(inode);
-            this.WriteBitMap(this.bm_inode);
-            this.WriteBitMap(this.bm_block);
-        }
-
-        /// <summary>
         /// Преобразовать массив байт - данные папки в массив данных типа id инода - имя файла
         /// Папка будет 64 байта - 8 на адрес инода, остальное - имя
         /// </summary>
@@ -626,7 +313,8 @@ namespace S5FS
             while (splitted.MoveNext())
             {
                 var id = BitConverter.ToUInt64(splitted.Current, 0);
-                var name = BitConverter.ToString(splitted.Current, 8);
+                
+                var name = Encoding.Unicode.GetString(splitted.Current, 8, 64 - 8);
                 files.Add(new(id, name));
             }
             var existing_files = from file in files where file.Key != 0 select file; // онли существующие
@@ -645,7 +333,10 @@ namespace S5FS
             for (long i = 0; i < files.Count(); i++)
             {
                 var id = BitConverter.GetBytes(files[i].Key);
-                var value = Encoding.Unicode.GetBytes(files[i].Value);
+
+                var str = Helper.StringExtender(files[i].Value, 28);
+
+                var value = Encoding.Unicode.GetBytes(str);
                 bytes.AddRange(id);
                 bytes.AddRange(value);
             }
@@ -668,6 +359,7 @@ namespace S5FS
             parent_inode_bytes = this.DictToFolderData(files_in_parent_inode.ToArray());
             //Размер мог стать больше предыдущего к-ва кластеров
             this.WriteDataByInode(folder, parent_inode_bytes);
+            
             newFile.di_nlinks++;
         }
 
@@ -706,6 +398,14 @@ namespace S5FS
             }
 
             return last_inode;
+        }
+
+        private void WriteSuperBlock()
+        {
+            byte[] buffer = SuperBlock.SaveToByteArray(this.sb);
+            this.fs.Seek(0, SeekOrigin.Begin);
+            this.fs.Write(buffer);
+            this.fs.Flush();
         }
 
         #endregion
@@ -884,33 +584,38 @@ namespace S5FS
         /// <exception cref="Exception"></exception>
         public InodeInfo CreateFile(String path, String name, bool isFolder = false)
         {
+            name = Helper.StringExtender(name, 28);
             String[] parts = path.Split('\\');
             var last_Inode = this.ReadInode(0);
             var inode_bytes = this.ReadDataByInode(last_Inode);
             var files_in_last_inode = GetFilesFromFolderData(inode_bytes);
-
-            foreach (var part in parts) //Нахождение последнего inode в пути
+            if (path.Length is not 0)
             {
-                var items = from fold in files_in_last_inode
-                            where fold.Value == part
-                            select fold; // Может быть только одно имя, либо ничего
-                if (items.Count() is 0)
+                foreach (var part in parts) //Нахождение последнего inode в пути
                 {
-                    throw new Exception($"Папка @{part}@ не существует");
+                    var vs = Helper.StringExtender(part, 28);
+                    var items = from fold in files_in_last_inode
+                                where fold.Value == vs
+                                select fold; // Может быть только одно имя, либо ничего
+                    if (items.Count() is 0)
+                    {
+                        throw new Exception($"Папк а @{part}@ не существует");
+                    }
+                    var item = items.First();
+                    // Проверка, что item - не файл
+                    last_Inode = this.ReadInode(item.Key);
+                    var type = Inode.GetInodeType(last_Inode);
+                    if (type is InodeTypeEnum.File)
+                    {
+                        throw new Exception($"Папка @{part}@ не существует");
+                    }
+                    // Если дошли сюда, значит проверка на папку пройдена
+                    // Выполняем те же действия, что и перед циклом
+                    inode_bytes = this.ReadDataByInode(last_Inode);
+                    files_in_last_inode = GetFilesFromFolderData(inode_bytes);
                 }
-                var item = items.First();
-                // Проверка, что item - не файл
-                last_Inode = this.ReadInode(item.Key);
-                var type = Inode.GetInodeType(last_Inode);
-                if (type is InodeTypeEnum.File)
-                {
-                    throw new Exception($"Папка @{part}@ не существует");
-                }
-                // Если дошли сюда, значит проверка на папку пройдена
-                // Выполняем те же действия, что и перед циклом
-                inode_bytes = this.ReadDataByInode(last_Inode);
-                files_in_last_inode = GetFilesFromFolderData(inode_bytes);
             }
+            
             // Тут, если найдена последняя папка
             // Проверка на наличие в ней файла/папки с нужныи именем файла
             var check = from fold in files_in_last_inode
@@ -961,6 +666,9 @@ namespace S5FS
             this.bm_block.ChangeBlockState(block_num, false);
             this.WriteBitMap(bm_block);
 
+            //Запишем новый суперблок
+            this.WriteSuperBlock();
+
             //Нужно записать фул пустой блок, чтобы мусора не было
             this.WriteToDataBlock(new byte[this.sb.s_blen], block_num);
 
@@ -980,7 +688,16 @@ namespace S5FS
         /// <exception cref="Exception"></exception>
         public InodeInfo OpenFile(String path, String name)
         {
-            var inode = this.GetInodeByPath(path.Split("\\"));
+            Inode inode;
+            if (path.Length is 0)
+            {
+                inode = ReadInode(0);
+            }
+            else
+            {
+                inode = this.GetInodeByPath(path.Split("\\"));
+            }
+                
             var inode_bytes = this.ReadDataByInode(inode);
             var files_in_last_inode = GetFilesFromFolderData(inode_bytes);
 
@@ -996,6 +713,323 @@ namespace S5FS
             var inode_to_open = this.ReadInode(file_to_open.Key);
             var data = ReadDataByInode(inode_to_open);
             return new(inode, inode_to_open, data);
+        }
+
+        /// <summary>
+        /// Возможно рабочий метод записи/перезаписи/добавления инфы по иноду
+        /// </summary>
+        /// <param name="inode"></param>
+        /// <param name="newData"></param>
+        /// <exception cref="Exception"></exception>
+        public void WriteDataByInode(Inode inode, byte[] newData)
+        {
+            UInt64 block_num = inode.di_size % this.sb.s_blen == 0 ?
+                inode.di_size / this.sb.s_blen :
+                (inode.di_size / this.sb.s_blen + 1);
+            if (block_num is 0) block_num = 1;
+            UInt64 new_block_num = (ulong)(newData.LongLength % this.sb.s_blen == 0 ?
+                newData.LongLength / this.sb.s_blen :
+                (newData.LongLength / this.sb.s_blen + 1));
+
+            UInt64 addresses_in_block = this.sb.s_blen / 8;
+
+            inode.di_atime = DateTime.Now.ToBinary();
+
+            var bm_copy = (BitMap)this.bm_block.Clone();
+            var inode_bm_copy = (BitMap)this.bm_inode.Clone();
+            var inode_copy = (Inode)inode.Clone();
+
+            List<UInt64> addresses_to_write_data = new();
+
+            if (new_block_num == block_num) // Не нужно выделять новые блоки
+            {
+                if (new_block_num <= 10) // 0й уровень адресации
+                {
+                    for (UInt64 i = 0; i < new_block_num; i++)
+                    {
+                        addresses_to_write_data.Add(inode.di_addr[i]);
+                    }
+                }
+                if (new_block_num > 10 && new_block_num < 10 + addresses_in_block) // 1й уровень адресации
+                {
+                    UInt64 counter = 0;
+                    for (UInt64 i = 0; i < 10; i++, counter++)
+                    {
+                        addresses_to_write_data.Add(inode.di_addr[i]);
+                    }
+                    var first = GetAddressesFromBlock(ReadFromDataBlock(inode.di_addr[10]));
+                    for (UInt64 i = 0; counter < new_block_num; i++, counter++)
+                    {
+                        addresses_to_write_data.Add(first[i]);
+                    }
+                }
+                if (new_block_num > 10 + addresses_in_block && new_block_num < 10 + addresses_in_block * addresses_in_block) // 2й уровень адресации
+                {
+                    UInt64 counter = 0;
+                    for (UInt64 i = 0; i < 10; i++, counter++)
+                    {
+                        addresses_to_write_data.Add(inode.di_addr[i]);
+                    }
+                    var first = GetAddressesFromBlock(ReadFromDataBlock(inode.di_addr[10]));
+                    for (UInt64 i = 0; i < (ulong)first.LongLength; i++, counter++)
+                    {
+                        addresses_to_write_data.Add(first[i]);
+                    }
+                    var second = GetAddressesFromBlock(ReadFromDataBlock(inode.di_addr[11]));
+                    for (UInt64 i = 0; counter < new_block_num; i++, counter++)
+                    {
+                        addresses_to_write_data.Add(second[i]);
+                    }
+                }
+                if (new_block_num > 10 + addresses_in_block * addresses_in_block && new_block_num < 10 + addresses_in_block * addresses_in_block * addresses_in_block) // 3й уровень адресации
+                {
+                    UInt64 counter = 0;
+                    for (UInt64 i = 0; i < 10; i++, counter++)
+                    {
+                        addresses_to_write_data.Add(inode.di_addr[i]);
+                    }
+                    var first = GetAddressesFromBlock(ReadFromDataBlock(inode.di_addr[10]));
+                    for (UInt64 i = 0; i < (ulong)first.LongLength; i++, counter++)
+                    {
+                        addresses_to_write_data.Add(first[i]);
+                    }
+                    var second = GetAddressesFromBlock(ReadFromDataBlock(inode.di_addr[11]));
+                    for (UInt64 i = 0; i < (ulong)second.LongLength; i++, counter++)
+                    {
+                        addresses_to_write_data.Add(second[i]);
+                    }
+                    var third = GetAddressesFromBlock(ReadFromDataBlock(inode.di_addr[12]));
+                    for (UInt64 i = 0; counter < new_block_num; i++, counter++)
+                    {
+                        addresses_to_write_data.Add(third[i]);
+                    }
+                }
+            }
+            else if (new_block_num < block_num) // Нужно освободить некоторые //Аналогично предыдущему, но уменьшить размер
+            {
+                if (new_block_num <= 10) // 0й уровень адресации
+                {
+                    for (UInt64 i = 0; i < new_block_num; i++)
+                    {
+                        addresses_to_write_data.Add(inode.di_addr[i]);
+                    }
+                }
+                if (new_block_num > 10 && new_block_num < 10 + addresses_in_block) // 1й уровень адресации
+                {
+                    UInt64 counter = 0;
+                    for (UInt64 i = 0; i < 10; i++, counter++)
+                    {
+                        addresses_to_write_data.Add(inode.di_addr[i]);
+                    }
+                    var first = GetAddressesFromBlock(ReadFromDataBlock(inode.di_addr[10]));
+                    for (UInt64 i = 0; counter < new_block_num; i++, counter++)
+                    {
+                        addresses_to_write_data.Add(first[i]);
+                    }
+                }
+                if (new_block_num > 10 + addresses_in_block && new_block_num < 10 + addresses_in_block * addresses_in_block) // 2й уровень адресации
+                {
+                    UInt64 counter = 0;
+                    for (UInt64 i = 0; i < 10; i++, counter++)
+                    {
+                        addresses_to_write_data.Add(inode.di_addr[i]);
+                    }
+                    var first = GetAddressesFromBlock(ReadFromDataBlock(inode.di_addr[10]));
+                    for (UInt64 i = 0; i < (ulong)first.LongLength; i++, counter++)
+                    {
+                        addresses_to_write_data.Add(first[i]);
+                    }
+                    var second = GetAddressesFromBlock(ReadFromDataBlock(inode.di_addr[11]));
+                    for (UInt64 i = 0; counter < new_block_num; i++, counter++)
+                    {
+                        addresses_to_write_data.Add(second[i]);
+                    }
+                }
+                if (new_block_num > 10 + addresses_in_block * addresses_in_block && new_block_num < 10 + addresses_in_block * addresses_in_block * addresses_in_block) // 3й уровень адресации
+                {
+                    UInt64 counter = 0;
+                    for (UInt64 i = 0; i < 10; i++, counter++)
+                    {
+                        addresses_to_write_data.Add(inode.di_addr[i]);
+                    }
+                    var first = GetAddressesFromBlock(ReadFromDataBlock(inode.di_addr[10]));
+                    for (UInt64 i = 0; i < (ulong)first.LongLength; i++, counter++)
+                    {
+                        addresses_to_write_data.Add(first[i]);
+                    }
+                    var second = GetAddressesFromBlock(ReadFromDataBlock(inode.di_addr[11]));
+                    for (UInt64 i = 0; i < (ulong)second.LongLength; i++, counter++)
+                    {
+                        addresses_to_write_data.Add(second[i]);
+                    }
+                    var third = GetAddressesFromBlock(ReadFromDataBlock(inode.di_addr[12]));
+                    for (UInt64 i = 0; counter < new_block_num; i++, counter++)
+                    {
+                        addresses_to_write_data.Add(third[i]);
+                    }
+                }
+                addresses_to_write_data.Reverse();
+                addresses_to_write_data.RemoveRange((int)new_block_num, (int)(block_num - new_block_num));
+                addresses_to_write_data.Reverse();
+                this.sb.s_tfree += block_num - new_block_num;
+            }
+            else // Нужно выделить новые // Аналогично первому, но считать по block_num и добавить еще
+            {
+                if (block_num <= 10) // 0й уровень адресации
+                {
+                    for (UInt64 i = 0; i < block_num; i++)
+                    {
+                        addresses_to_write_data.Add(inode.di_addr[i]);
+                    }
+                    if (block_num == 10) //Нужно начать второй уровень адресации
+                    {
+                        inode.di_addr[10] = this.bm_block.FirstEmpty();
+                        var newAddr = this.bm_block.FirstEmpty();
+                        var block = AddressesToBlock(new ulong[] { newAddr });
+                        this.WriteToDataBlock(block, inode.di_addr[10]);
+                        addresses_to_write_data.Add(newAddr);
+                    }
+                    else // Влезаем в старый
+                    {
+                        inode.di_addr[block_num] = this.bm_block.FirstEmpty();
+                        var newAddr = this.bm_block.FirstEmpty();
+                        var block = AddressesToBlock(new ulong[] { newAddr });
+                        this.WriteToDataBlock(block, inode.di_addr[block_num]);
+                        addresses_to_write_data.Add(newAddr);
+                    }
+                }
+                if (block_num > 10 && block_num < 10 + addresses_in_block) // 1й уровень адресации
+                {
+                    UInt64 counter = 0;
+                    for (UInt64 i = 0; i < 10; i++, counter++)
+                    {
+                        addresses_to_write_data.Add(inode.di_addr[i]);
+                    }
+                    var first = GetAddressesFromBlock(ReadFromDataBlock(inode.di_addr[10]));
+                    for (UInt64 i = 0; counter < block_num; i++, counter++)
+                    {
+                        addresses_to_write_data.Add(first[i]);
+                    }
+                    if (block_num == 10 + addresses_in_block) // Новый уровень адресации
+                    {
+                        inode.di_addr[11] = this.bm_block.FirstEmpty();
+                        var newAddr = this.bm_block.FirstEmpty();
+                        var block = AddressesToBlock(new ulong[] { newAddr });
+                        this.WriteToDataBlock(block, inode.di_addr[11]);
+                        addresses_to_write_data.Add(newAddr);
+                    }
+                    else // Старый
+                    {
+                        var old_addresses = this.GetAddressesFromBlock(this.ReadFromDataBlock(inode.di_addr[10]));
+                        var newAddr = this.bm_block.FirstEmpty();
+                        var vs = old_addresses.ToList();
+                        vs.Add(newAddr);
+                        var new_addresses = vs.ToArray();
+                        var block = this.AddressesToBlock(new_addresses);
+                        this.WriteToDataBlock(block, inode.di_addr[10]);
+                        addresses_to_write_data.Add(newAddr);
+                    }
+                }
+                if (block_num > 10 + addresses_in_block && block_num < 10 + addresses_in_block * addresses_in_block) // 2й уровень адресации
+                {
+                    UInt64 counter = 0;
+                    for (UInt64 i = 0; i < 10; i++, counter++)
+                    {
+                        addresses_to_write_data.Add(inode.di_addr[i]);
+                    }
+                    var first = GetAddressesFromBlock(ReadFromDataBlock(inode.di_addr[10]));
+                    for (UInt64 i = 0; i < (ulong)first.LongLength; i++, counter++)
+                    {
+                        addresses_to_write_data.Add(first[i]);
+                    }
+                    var second = GetAddressesFromBlock(ReadFromDataBlock(inode.di_addr[11]));
+                    for (UInt64 i = 0; counter < block_num; i++, counter++)
+                    {
+                        addresses_to_write_data.Add(second[i]);
+                    }
+                    if (block_num == 10 + addresses_in_block * addresses_in_block) // Новый уровень адресации
+                    {
+                        inode.di_addr[12] = this.bm_block.FirstEmpty();
+                        var newAddr = this.bm_block.FirstEmpty();
+                        var block = AddressesToBlock(new ulong[] { newAddr });
+                        this.WriteToDataBlock(block, inode.di_addr[12]);
+                        addresses_to_write_data.Add(newAddr);
+                    }
+                    else // Старый
+                    {
+                        var old_addresses = this.GetAddressesFromBlock(this.ReadFromDataBlock(inode.di_addr[11]));
+                        var newAddr = this.bm_block.FirstEmpty();
+                        var vs = old_addresses.ToList();
+                        vs.Add(newAddr);
+                        var new_addresses = vs.ToArray();
+                        var block = this.AddressesToBlock(new_addresses);
+                        this.WriteToDataBlock(block, inode.di_addr[11]);
+                        addresses_to_write_data.Add(newAddr);
+                    }
+                }
+                if (block_num > 10 + addresses_in_block * addresses_in_block && block_num < 10 + addresses_in_block * addresses_in_block * addresses_in_block) // 3й уровень адресации
+                {
+                    UInt64 counter = 0;
+                    for (UInt64 i = 0; i < 10; i++, counter++)
+                    {
+                        addresses_to_write_data.Add(inode.di_addr[i]);
+                    }
+                    var first = GetAddressesFromBlock(ReadFromDataBlock(inode.di_addr[10]));
+                    for (UInt64 i = 0; i < (ulong)first.LongLength; i++, counter++)
+                    {
+                        addresses_to_write_data.Add(first[i]);
+                    }
+                    var second = GetAddressesFromBlock(ReadFromDataBlock(inode.di_addr[11]));
+                    for (UInt64 i = 0; i < (ulong)second.LongLength; i++, counter++)
+                    {
+                        addresses_to_write_data.Add(second[i]);
+                    }
+                    var third = GetAddressesFromBlock(ReadFromDataBlock(inode.di_addr[12]));
+                    for (UInt64 i = 0; counter < block_num; i++, counter++)
+                    {
+                        addresses_to_write_data.Add(third[i]);
+                    }
+                    if (block_num == 10 + addresses_in_block * addresses_in_block) // Новый уровень адресации уже не влезает
+                    {
+                        this.bm_block = bm_copy;
+                        this.bm_inode = inode_bm_copy;
+                        inode = inode_copy;
+                        throw new Exception("Too large file for inode");
+                    }
+                    else // Старый
+                    {
+                        var old_addresses = this.GetAddressesFromBlock(this.ReadFromDataBlock(inode.di_addr[12]));
+                        var newAddr = this.bm_block.FirstEmpty();
+                        var vs = old_addresses.ToList();
+                        vs.Add(newAddr);
+                        var new_addresses = vs.ToArray();
+                        var block = this.AddressesToBlock(new_addresses);
+                        this.WriteToDataBlock(block, inode.di_addr[12]);
+                        addresses_to_write_data.Add(newAddr);
+                    }
+                }
+                this.sb.s_tfree -= new_block_num - block_num;
+            }
+
+            //Если дошли сюда - знаем все адреса, куда надо записать информацию
+            var enumer = Helper.Slicer(newData, this.sb.s_blen).GetEnumerator();
+
+            var arr = addresses_to_write_data.ToArray();
+
+            for (UInt64 i = 0; enumer.MoveNext(); i++)
+            {
+                this.WriteToDataBlock(enumer.Current, arr[i]);
+            }
+
+            //Если все ок - можно записать новый инод и карты на диск
+            inode.di_size = (UInt64)newData.LongLength;
+
+            inode.di_mtime = DateTime.Now.ToBinary();
+
+            this.WriteInode(inode);
+            this.WriteBitMap(this.bm_inode);
+            this.WriteBitMap(this.bm_block);
+            this.WriteSuperBlock();
         }
 
         #endregion

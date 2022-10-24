@@ -110,5 +110,15 @@ namespace S5FS
         /// Нужен для удобного переименования файла.
         /// </summary>
         protected Inode parent_inode;
+
+        public static byte[] StringToByteArr(String str)
+        {
+            return Encoding.Unicode.GetBytes(str);
+        }
+        public static String ByteArrToString(byte[] arr)
+        {
+            return Encoding.Unicode.GetString(arr);
+        }
+
     }
 }

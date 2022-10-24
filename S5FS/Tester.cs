@@ -13,9 +13,25 @@ namespace S5FS
     {
         public static void Main()
         {
-            //var s5fs = S5FS.format("qwe", 2048, 5242880);
-            //s5fs.CreateFile("", "qwe", false);
-            //s5fs.CreateFile("", "qwe2", false);
+            //var fs = S5FS.format("qwe", 2048, 20971520);
+            //var file = fs.CreateFile("", "Hello");
+            //fs.WriteDataByInode(file.daughter, Obj.StringToByteArr("Hello World!!!"));
+            //var file2 = fs.OpenFile("", "Hello");
+            //Console.WriteLine(Obj.ByteArrToString(file2.data));
+
+            //var fs = S5FS.load_from_file("qwe");
+            //var file2 = fs.OpenFile("", "Hello");
+            //Console.WriteLine(Obj.ByteArrToString(file2.data));
+
+            var fs = S5FS.format("qwe", 2048, 20971520);
+            var file1 = fs.CreateFile("", "File");
+            fs.WriteDataByInode(file1.daughter, Obj.StringToByteArr("Test!"));
+            var folder = fs.CreateFile("", "Papaka", true);
+            //var file = fs.CreateFile("Papaka", "file1");
+            //fs.WriteDataByInode(file.daughter, Obj.StringToByteArr("Proverka!"));
+            //var file2 = fs.OpenFile("Papaka", "file1");
+            //Console.WriteLine(Obj.ByteArrToString(file2.data));
+
         }
     }
 }
