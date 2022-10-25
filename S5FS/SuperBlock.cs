@@ -9,7 +9,7 @@ namespace S5FS
     /// <summary>
     /// Вес: 512(38) байт (резерв)
     /// </summary>
-    internal class SuperBlock
+    internal class SuperBlock : ICloneable
     {
         public const int superblock_size = 512;
 
@@ -108,6 +108,11 @@ namespace S5FS
             sb.s_blen = BitConverter.ToUInt32(array, 34);
 
             return sb;
+        }
+
+        public object Clone()
+        {
+            return this.MemberwiseClone();
         }
     }
 }

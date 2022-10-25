@@ -32,6 +32,13 @@ namespace S5FS
             //var file2 = fs.OpenFile("Papaka", "file1");
             //Console.WriteLine(Obj.ByteArrToString(file2.data));
 
+            var arr = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+            var slcd = Helper.Slicer(arr, 3).GetEnumerator();
+            while (slcd.MoveNext())
+            {
+                Console.WriteLine(String.Join(' ', slcd.Current));
+            }
+
         }
     }
 }

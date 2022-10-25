@@ -20,6 +20,22 @@ namespace S5FS
         public UInt64 length;
         public UInt64 start_block;
 
+        public UInt64 FreeBlocks
+        {
+            get
+            {
+                UInt64 res = 0;
+                for (UInt64 i = 1; i < this.length; i++)
+                {
+                    if (this.isBlockEmpty(i))
+                    {
+                        res++;
+                    }
+                }
+                return res;
+            }
+        }
+
         public BitMap(ulong array_len, ulong length, ulong start_block)
         {
             this.map = new byte[array_len];
