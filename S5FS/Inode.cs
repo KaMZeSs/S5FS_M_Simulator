@@ -9,11 +9,11 @@ using System.Threading.Tasks;
 namespace S5FS
 {
     /// <summary>
-    /// Вес: 144 байта
+    /// Вес: 126 байт
     /// </summary>
     internal class Inode : ICloneable
     {
-        public const int inode_size = 144;
+        public const int inode_size = 126;
 
         /// <summary>
         /// Тип файла, права доступа тип|rwx|rwx|rwx|reserv5bit. 2 байта.
@@ -59,7 +59,7 @@ namespace S5FS
 
         public Inode(UInt64 num)
         {
-            this.di_addr = new UInt64[13];
+            this.di_addr = new UInt64[11];
             this.index = num;
         }
 
@@ -75,7 +75,7 @@ namespace S5FS
         /// <returns>Массив байт.</returns>
         public static byte[] SaveToByteArray(Inode inode)
         {
-            var bytes = new byte[144];
+            var bytes = new byte[Inode.inode_size];
 
             Array.Copy(BitConverter.GetBytes(inode.di_mode), 0, bytes, 0, 2);
             Array.Copy(BitConverter.GetBytes(inode.di_nlinks), 0, bytes, 2, 2);
@@ -106,7 +106,7 @@ namespace S5FS
         {
             if (array.Length != inode_size)
             {
-                throw new Exception("Inode size must be 144 bytes");
+                throw new Exception($"Inode size must be {Inode.inode_size} bytes");
             }
 
             Inode inode = new(num);
