@@ -319,6 +319,7 @@ namespace S5FS
             this.WriteDataByInode(folder, parent_inode_bytes);
             
             newFile.di_nlinks++;
+            this.WriteInode(newFile);
         }
 
         /// <summary>
@@ -333,8 +334,9 @@ namespace S5FS
 
             foreach (var part in path)
             {
+                var vs = part.Trim();
                 var items = from fold in files_in_last_inode
-                            where fold.Value == part
+                            where fold.Value.Trim() == part
                             select fold; // Может быть только одно имя, либо ничего
                 if (items.Count() is 0)
                 {
@@ -417,6 +419,10 @@ namespace S5FS
             throw new OutOfMemoryException();
         }
 
+        /// <summary>
+        /// Мб работающий метод удаления файла по иноду
+        /// </summary>
+        /// <param name="inode"></param>
         private void ReleaseBlocksByInode(Inode inode)
         {
             UInt64 block_num = inode.di_size % this.sb.s_blen == 0 ?
@@ -431,13 +437,40 @@ namespace S5FS
                 }
                 if (i < 10)
                 {
-                    
+                    this.bm_block.ChangeBlockState(inode.di_addr[i], true);
+                    this.sb.s_tfree++;
+                    inode.di_addr[i] = 0;
+                    block_num--;
                 }
                 if (i == 10)
                 {
-
+                    if (block_num is 0)
+                    {
+                        break;
+                    }
+                    this.bm_block.ChangeBlockState(inode.di_addr[i], true);
+                    this.sb.s_tfree++;
+                    inode.di_addr[i] = 0;
+                    var existing_addresses = this.GetAddressesFromBlock(this.ReadFromDataBlock(inode.di_addr[i]))
+                            .Where(x => x is not 0).GetEnumerator();
+                    while (existing_addresses.MoveNext())
+                    {
+                        if (block_num is 0)
+                        {
+                            break;
+                        }
+                        this.bm_block.ChangeBlockState(existing_addresses.Current, true);
+                        this.sb.s_tfree++;
+                        block_num--;
+                    }
                 }
             }
+
+            inode.di_mode = 0;
+            this.WriteInode(inode);
+            this.WriteBitMap(this.bm_inode);
+            this.WriteBitMap(this.bm_block);
+            this.WriteSuperBlock();
         }
 
         #endregion
@@ -734,12 +767,14 @@ namespace S5FS
             {
                 inode = this.GetInodeByPath(path.Split("\\"));
             }
+
+            var str = Helper.StringExtender(name, 28);
                 
             var inode_bytes = this.ReadDataByInode(inode);
             var files_in_last_inode = GetFilesFromFolderData(inode_bytes);
 
             var check = from fold in files_in_last_inode
-                        where fold.Value == name
+                        where fold.Value == str
                         select fold;
             if (check.Count() is 0)
             {
@@ -783,6 +818,7 @@ namespace S5FS
                 }
             } //Проверка на то, чтобы хватило
 
+            inode.di_size = (ulong)newData.LongLength;
             inode.di_atime = DateTime.Now.ToBinary();
 
             var data_to_write = Helper.Slicer(newData, this.sb.s_blen).GetEnumerator();

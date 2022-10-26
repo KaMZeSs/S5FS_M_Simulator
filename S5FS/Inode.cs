@@ -9,11 +9,11 @@ using System.Threading.Tasks;
 namespace S5FS
 {
     /// <summary>
-    /// Вес: 126 байт
+    /// Вес: 128 байт
     /// </summary>
     internal class Inode : ICloneable
     {
-        public const int inode_size = 126;
+        public const int inode_size = 128;
 
         /// <summary>
         /// Тип файла, права доступа тип|rwx|rwx|rwx|reserv5bit. 2 байта.
