@@ -11,6 +11,8 @@ namespace S5FS
         S5FS s5fs;
 
         List<String> commands;
+
+        String curr_dir = "";
         
         public Emulator(S5FS s5fs)
         {
@@ -43,7 +45,27 @@ namespace S5FS
 
         public void Work()
         {
+            while (true)
+            {
 
+            }
         }
+
+        
+        
+        String[] ParseArgs(String str)
+        {
+            throw new NotImplementedException();
+        }
+
+        //String ExecuteCommand(String command, String[] args)
+        //{
+
+        //}
+
+        //public String Operation_LS()
+        //{
+
+        //}
     }
 }

@@ -11,7 +11,7 @@ namespace S5FS
     /// <summary>
     /// Вес: 128 байт
     /// </summary>
-    internal class Inode : ICloneable
+    public class Inode : ICloneable
     {
         public const int inode_size = 128;
 
@@ -49,7 +49,7 @@ namespace S5FS
         /// </summary>
         public Int64 di_ctime;
         /// <summary>
-        /// Массив адресов дисковых блоков хранения данных. 13 элементов. 8*13 =  104 байт.
+        /// Массив адресов дисковых блоков хранения данных. 11 элементов. 8*1 =  88 байт.
         /// </summary>
         public UInt64[] di_addr;
         /// <summary>

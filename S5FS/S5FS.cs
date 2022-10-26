@@ -14,7 +14,7 @@ namespace S5FS
     /// Файловая система: Суперблок (512); ilist (хз); бит карта инодов (хз); бит карта блоков (хз)
     /// Максимальный размер системы зависит от кластера
     /// </summary>
-    internal class S5FS
+    public class S5FS
     {
         #region Private
 

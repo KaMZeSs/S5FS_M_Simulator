@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace S5FS
+namespace Emulator
 {
     /// <summary>
     /// Класс объекта файловой системы.
@@ -19,12 +19,13 @@ namespace S5FS
         {
             get
             {
-                switch (Inode.GetInodeType(inode))
+                switch (S5FS.Inode.GetInodeType(inode))
                 {
-                    case InodeTypeEnum.Folder: return true;
-                    case InodeTypeEnum.File: return false;
+                    case S5FS.InodeTypeEnum.Folder: return true;
+                    case S5FS.InodeTypeEnum.File: return false;
                 }
                 throw new Exception();
+                
             }
         }
         /// <summary>
@@ -104,12 +105,12 @@ namespace S5FS
         /// Инод файла.
         /// Из него получены все свойства файла, кроме пути и имени.
         /// </summary>
-        protected Inode inode;
+        protected S5FS.Inode inode;
         /// <summary>
         /// Родительский инод.
         /// Нужен для удобного переименования файла.
         /// </summary>
-        protected Inode parent_inode;
+        protected S5FS.Inode parent_inode;
 
         public static byte[] StringToByteArr(String str)
         {
@@ -119,6 +120,5 @@ namespace S5FS
         {
             return Encoding.Unicode.GetString(arr);
         }
-
     }
 }

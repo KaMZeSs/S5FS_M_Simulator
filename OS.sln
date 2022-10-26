@@ -5,6 +5,8 @@ VisualStudioVersion = 17.3.32804.467
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "S5FS", "S5FS\S5FS.csproj", "{686A5EE7-CB85-40D1-ADD5-C0489AF05483}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Emulator", "Emulator\Emulator.csproj", "{15362B25-D19F-4DD5-B8C6-713346E1C4BD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{686A5EE7-CB85-40D1-ADD5-C0489AF05483}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{686A5EE7-CB85-40D1-ADD5-C0489AF05483}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{686A5EE7-CB85-40D1-ADD5-C0489AF05483}.Release|Any CPU.Build.0 = Release|Any CPU
+		{15362B25-D19F-4DD5-B8C6-713346E1C4BD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{15362B25-D19F-4DD5-B8C6-713346E1C4BD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{15362B25-D19F-4DD5-B8C6-713346E1C4BD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{15362B25-D19F-4DD5-B8C6-713346E1C4BD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
