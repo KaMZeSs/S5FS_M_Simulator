@@ -9,9 +9,10 @@ namespace S5FS
     /// <summary>
     /// Вес: 512(38) байт (резерв)
     /// </summary>
-    internal class SuperBlock : ICloneable
+    public class SuperBlock : ICloneable
     {
         public const int superblock_size = 512;
+        public static UInt32 max_blocks_per_file { get; private set; }
 
         /// <summary>
         /// Тип ФС. 1 байт.
@@ -55,6 +56,8 @@ namespace S5FS
             this.s_blen = s_blen;
             this.s_fmod = 0xFF;
 
+            SuperBlock.max_blocks_per_file = 10 + s_blen / sizeof(UInt32);
+
             //Получаем к-во inode
             this.s_isize = this.s_tinode = (disk_size - 2048) / 64 / Inode.inode_size;
 
@@ -81,6 +84,7 @@ namespace S5FS
             superBlock[17] = sb.s_fmod; //Array.Copy(BitConverter.GetBytes(sb.s_fmod), 0, superBlock, 33, 1);
             Array.Copy(BitConverter.GetBytes(sb.s_blen), 0, superBlock, 18, 4);
 
+            
 
             return superBlock;
         }

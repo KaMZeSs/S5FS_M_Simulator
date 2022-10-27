@@ -13,16 +13,29 @@ namespace Emulator
     public partial class TextViewer : Form
     {
         public String TextView { get; private set; }
+        private int max_size;
+        bool isChanged;
 
-        public TextViewer(String text)
+        public TextViewer(String text, int max_size)
         {
             InitializeComponent();
+            richTextBox1.MaxLength = max_size;
             richTextBox1.Text = text;
             
+            this.max_size = max_size;
+
+            isChanged = false;
         }
 
         private void TextViewer_FormClosing(object sender, FormClosingEventArgs e)
         {
+            if (!isChanged)
+            {
+                TextView = richTextBox1.Text;
+                this.DialogResult = DialogResult.Cancel;
+                return;
+            }
+                
             var res = MessageBox.Show("Сохранить изменения?", "Сохранить изменения?", MessageBoxButtons.YesNoCancel);
             if (res is DialogResult.Yes)
             {
@@ -37,7 +50,16 @@ namespace Emulator
             {
                 e.Cancel = true;
             }
+        }
 
+        private void richTextBox1_TextChanged(object sender, EventArgs e)
+        {
+            
+        }
+
+        private void richTextBox1_KeyDown(object sender, KeyEventArgs e)
+        {
+            isChanged = true;
         }
     }
 }

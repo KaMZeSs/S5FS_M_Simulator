@@ -86,8 +86,29 @@ namespace Emulator
             var root_obj = new Obj("", "", root_inode, null);
 
             objs.Clear();
-            path.Clear();
             path.Push(root_obj);
+
+            List<Obj> file_objs = new();
+
+            foreach (var file in files)
+            {
+                var file_inode = s5fs.ReadInode(file.Key);
+
+                file_objs.Add(new(file.Value, this.StackObjToStr(path), file_inode, root_inode));
+            }
+
+            return file_objs.ToArray();
+        }
+
+        Obj[] UpdateFolder()
+        {
+            var root_inode = this.path.Peek().inode;
+            var root_data = s5fs.ReadDataByInode(root_inode);
+            var files = s5fs.GetFilesFromFolderData(root_data);
+
+            var root_obj = new Obj("", "", root_inode, null);
+
+            objs.Clear();
 
             List<Obj> file_objs = new();
 
@@ -123,7 +144,7 @@ namespace Emulator
             {
                 MessageBox.Show(exc.Message);
             }
-            var vs = this.OpenFolder(path.Peek());
+            var vs = this.UpdateFolder();
             this.UpdateTable(vs);
         }
 
@@ -134,15 +155,30 @@ namespace Emulator
                 throw new Exception($"{file.Name} - не файл");
             }
             var text = Obj.ByteArrToString(s5fs.ReadDataByInode(file.inode));
-            TextViewer textViewer = new(text);
-            var dialogResult = textViewer.ShowDialog();
-            if (dialogResult is DialogResult.OK) // Перезапись файла
-            {
-                s5fs.WriteDataByInode(file.inode, Obj.StringToByteArr(textViewer.TextView));
-            }
-            else // Передумал перезаписывать
-            {
 
+            var max_text_size = (int)(s5fs.max_file_size / 2);
+
+            TextViewer textViewer = new(text, max_text_size);
+
+            while (true)
+            {
+                var dialogResult = textViewer.ShowDialog();
+                if (dialogResult is DialogResult.OK) // Перезапись файла
+                {
+                    try
+                    {
+                        s5fs.WriteDataByInode(file.inode, Obj.StringToByteArr(textViewer.TextView));
+                        break;
+                    }
+                    catch (Exception)
+                    {
+                        MessageBox.Show("Недостаточно места. Уменьшите размер файла.");
+                    }
+                }
+                else // Передумал перезаписывать
+                {
+                    break;
+                }
             }
         }
 
@@ -180,7 +216,34 @@ namespace Emulator
         /// <param name="e"></param>
         private void dataGridView1_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
         {
+            var index = (int)dataGridView1["FileID_Column", e.RowIndex].Value;
+            var objects = this.objs.Where(x => x.Key == index);
+            if (objects.Count() is 0)
+                throw new Exception("IDK What's going on");
+            var file = objects.First().Value;
+            if (file.isFolder)
+            {
+                var vs = this.OpenFolder(file);
+                this.UpdateTable(vs);
+            }
+            else
+            {
+                this.OpenFile(file);
+                var vs = this.UpdateFolder();
+                this.UpdateTable(vs);
+            }
 
+        }
+
+        private void panel2_Click(object sender, EventArgs e)
+        {
+            if (path.Count is 1)
+            {
+                return;
+            }
+            path.Pop();
+            var vs = this.OpenFolder(path.Pop());
+            this.UpdateTable(vs);
         }
     }
 }

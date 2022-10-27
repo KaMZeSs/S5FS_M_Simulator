@@ -33,6 +33,14 @@ namespace S5FS
         /// </summary>
         FileStream fs;
 
+        BitMap bm_block_temp;
+        BitMap bm_inode_temp;
+
+        SuperBlock sb_temp;
+
+
+        public UInt32 max_file_size { get; private set; }
+
         /// <summary>
         /// Позиция самого первого блока относительно начала файла
         /// </summary>
@@ -58,6 +66,14 @@ namespace S5FS
             for (UInt32 i = map.start_block; slicer.MoveNext(); i++)
             {
                 this.WriteToDataBlock(slicer.Current, i);
+            }
+            if (map.start_block is 0)
+            {
+                bm_inode_temp = (BitMap)map.Clone();
+            }
+            else
+            {
+                bm_block_temp = (BitMap)map.Clone();
             }
         }
 
@@ -198,18 +214,18 @@ namespace S5FS
                 {
                     var addr = inode.di_addr[i]; //Номер i-го блока
                     block = this.ReadFromDataBlock(addr);
-                    block.CopyTo(result, (long)(block_counter * this.sb.s_blen));
+                    block.CopyTo(result, block_counter * this.sb.s_blen);
                 }
 
                 //Получить некст адреса
-                block = this.ReadFromDataBlock(10);
+                block = this.ReadFromDataBlock(inode.di_addr[10]);
                 var addresses_1 = this.GetAddressesFromBlock(block);
 
                 for (long i = 0; i < addresses_1.LongLength && block_counter < block_num; i++, block_counter++) // Все адреса из блока 10
                 {
                     var addr = addresses_1[i];
                     block = this.ReadFromDataBlock(addr);
-                    block.CopyTo(result, (long)(block_counter * this.sb.s_blen));
+                    block.CopyTo(result, block_counter * this.sb.s_blen);
                 }
             }
             catch (Exception) // Если Exception - значит ласт блок не влез
@@ -250,7 +266,8 @@ namespace S5FS
             byte[] result = new byte[this.sb.s_blen];
             for (int i = 0; i < addr.Length; i++)
             {
-                Array.Copy(BitConverter.GetBytes(addr[i]), result, i * 4);
+                var toWrite = BitConverter.GetBytes(addr[i]);
+                Array.Copy(toWrite, 0, result, i * 4, 4);
             }
             return result;
         }
@@ -363,6 +380,7 @@ namespace S5FS
             this.fs.Seek(0, SeekOrigin.Begin);
             this.fs.Write(buffer);
             this.fs.Flush();
+            sb_temp = (SuperBlock)this.sb.Clone();
         }
 
         /// <summary>
@@ -436,6 +454,8 @@ namespace S5FS
             byte[] buffer = SuperBlock.SaveToByteArray(s5FS.sb);
             s5FS.fs.Write(buffer);
             s5FS.fs.Flush();
+
+            s5FS.max_file_size = SuperBlock.max_blocks_per_file * s5FS.sb.s_blen;
 
             //Скок в блок адресов влезет
             s5FS.addr_in_block = s5FS.sb.s_blen / 4;
@@ -586,108 +606,6 @@ namespace S5FS
                 this.daughter = daughter;
                 this.data = data;
             }
-        }
-
-        /// <summary>
-        /// Возможно рабочий метод создания файла, или папки
-        /// </summary>
-        /// <param name="path"></param>
-        /// <param name="name"></param>
-        /// <exception cref="Exception"></exception>
-        public InodeInfo CreateFile(String path, String name, bool isFolder = false)
-        {
-            name = Helper.StringExtender(name, 30);
-            String[] parts = path.Split('\\');
-            var last_Inode = this.ReadInode(0);
-            var inode_bytes = this.ReadDataByInode(last_Inode);
-            var files_in_last_inode = GetFilesFromFolderData(inode_bytes);
-            if (path.Length is not 0)
-            {
-                foreach (var part in parts) //Нахождение последнего inode в пути
-                {
-                    var vs = Helper.StringExtender(part, 30);
-                    var items = from fold in files_in_last_inode
-                                where fold.Value == vs
-                                select fold; // Может быть только одно имя, либо ничего
-                    if (items.Count() is 0)
-                    {
-                        throw new Exception($"Папк а @{part}@ не существует");
-                    }
-                    var item = items.First();
-                    // Проверка, что item - не файл
-                    last_Inode = this.ReadInode(item.Key);
-                    var type = Inode.GetInodeType(last_Inode);
-                    if (type is InodeTypeEnum.File)
-                    {
-                        throw new Exception($"Папка @{part}@ не существует");
-                    }
-                    // Если дошли сюда, значит проверка на папку пройдена
-                    // Выполняем те же действия, что и перед циклом
-                    inode_bytes = this.ReadDataByInode(last_Inode);
-                    files_in_last_inode = GetFilesFromFolderData(inode_bytes);
-                }
-            }
-            
-            // Тут, если найдена последняя папка
-            // Проверка на наличие в ней файла/папки с нужныи именем файла
-            var check = from fold in files_in_last_inode
-                        where fold.Value == name
-                        select fold;
-            if (check.Count() is not 0)
-            {
-                throw new Exception($"В данной папке уже имеется файл/папка с именем {name}");
-            }
-            //Получение номера свободного Inode
-            if (this.sb.s_tinode == 0)
-            {
-                throw new Exception();
-            }
-            var inode_num = this.bm_inode.FirstEmpty();
-            this.sb.s_tinode--;
-            //Получение номера свободного блока
-            if (this.sb.s_tfree == 0)
-            {
-                throw new Exception();
-            }
-            var block_num = this.bm_block.FirstEmpty();
-            this.sb.s_tfree--;
-
-            //Если дошли сюда, значит есть свободные блоки/инод
-            long time = DateTime.Now.Ticks;
-
-            ushort di_mode = (ushort)(isFolder ? 0b01_111_101_100_00000 : 0b10_111_101_100_00000); // Надо бы еще и пользователей/группы прикрутить
-
-            var inode = new Inode(inode_num)
-            {
-                di_mode = di_mode,
-                di_nlinks = 0,
-                di_uid = curr_user_id,
-                di_gid = curr_group_id,
-                di_size = 0,
-                di_atime = time,
-                di_mtime = time,
-                di_ctime = time,
-            };
-            inode.di_addr[0] = block_num;
-
-            WriteInode(inode);
-
-            //Изменим карты
-            this.bm_inode.ChangeBlockState(inode.index, false);
-            this.WriteBitMap(bm_inode);
-            this.bm_block.ChangeBlockState(block_num, false);
-            this.WriteBitMap(bm_block);
-
-            //Запишем новый суперблок
-            this.WriteSuperBlock();
-
-            //Нужно записать фул пустой блок, чтобы мусора не было
-            this.WriteToDataBlock(new byte[this.sb.s_blen], block_num);
-
-            //Запишем инфу о папке в родительскую папку
-            this.AddFileLinkToDirectory(last_Inode, inode, name);
-
-            return new(last_Inode, inode);
         }
 
         public InodeInfo CreateFile(Inode root, String name, bool isFolder = false)
@@ -855,6 +773,7 @@ namespace S5FS
         /// <param name="inode"></param>
         /// <param name="newData"></param>
         /// <exception cref="Exception"></exception>
+        /// <exception cref="OutOfMemoryException"></exception>
         public void WriteDataByInode(Inode inode, byte[] newData)
         {
             UInt32 block_num = inode.di_size % this.sb.s_blen == 0 ?
@@ -864,6 +783,11 @@ namespace S5FS
             UInt32 new_block_num = (UInt32)(newData.LongLength % this.sb.s_blen == 0 ?
                 newData.LongLength / this.sb.s_blen :
                 (newData.LongLength / this.sb.s_blen + 1));
+
+            if (new_block_num > SuperBlock.max_blocks_per_file)
+            {
+                throw new OutOfMemoryException();
+            }
 
             UInt32 prev_addresses_for_blocks = (uint)(this.sb.s_blen * 10 < block_num ? 1 : 0);
             UInt32 new_addresses_for_blocks = (uint)(this.sb.s_blen * 10 < new_block_num ? 1 : 0);
@@ -877,9 +801,6 @@ namespace S5FS
                     throw new OutOfMemoryException();
                 }
             } //Проверка на то, чтобы хватило
-
-            inode.di_size = (uint)newData.Length;
-            inode.di_atime = DateTime.Now.Ticks;
 
             var data_to_write = Helper.Slicer(newData, this.sb.s_blen).GetEnumerator();
             data_to_write.MoveNext();
@@ -926,6 +847,9 @@ namespace S5FS
                     }
                     else
                     {
+                        bm_block = (BitMap)bm_block_temp.Clone();
+                        bm_inode = (BitMap)bm_inode_temp.Clone();
+                        sb = (SuperBlock)sb_temp.Clone();
                         throw new OutOfMemoryException("Карамба");
                     }
                 }
@@ -1000,6 +924,9 @@ namespace S5FS
                     }
                     else
                     {
+                        bm_block = (BitMap)bm_block_temp.Clone();
+                        bm_inode = (BitMap)bm_inode_temp.Clone();
+                        sb = (SuperBlock)sb_temp.Clone();
                         throw new OutOfMemoryException("Карамба");
                     }
                 }
@@ -1019,6 +946,10 @@ namespace S5FS
                         }
                         else
                         {
+                            if (inode.di_addr[i] is 0) // Дальше уже не будет
+                            {
+                                break;
+                            }
                             this.bm_block.ChangeBlockState(inode.di_addr[i], true);
                             inode.di_addr[i] = 0;
                             this.sb.s_tfree++;
@@ -1039,6 +970,10 @@ namespace S5FS
                             }
                             else
                             {
+                                if (inode.di_addr[i] is 0) // Дальше уже не будет
+                                {
+                                    break;
+                                }
                                 this.bm_block.ChangeBlockState(inode.di_addr[i], true);
                                 inode.di_addr[i] = 0;
                                 this.sb.s_tfree++;
@@ -1049,12 +984,19 @@ namespace S5FS
                     }
                     else
                     {
+                        bm_block = (BitMap)bm_block_temp.Clone();
+                        bm_inode = (BitMap)bm_inode_temp.Clone();
+                        sb = (SuperBlock)sb_temp.Clone();
                         throw new OutOfMemoryException("Карамба");
                     }
                 }
             } // К-во блоков стало меньше
 
             //Надо записать на диск карты и инод
+
+            inode.di_size = (uint)newData.Length;
+            inode.di_atime = DateTime.Now.Ticks;
+            inode.di_mtime = DateTime.Now.Ticks;
 
             this.WriteInode(inode);
             this.WriteBitMap(this.bm_inode);
