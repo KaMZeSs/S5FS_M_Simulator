@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 namespace S5FS
 {
     /// <summary>
-    /// Вес: 128 байт
+    /// Вес: 80 байт
     /// </summary>
     public class Inode : ICloneable
     {
@@ -116,12 +116,12 @@ namespace S5FS
             inode.di_uid = BitConverter.ToUInt16(array, 4);
             inode.di_gid = BitConverter.ToUInt16(array, 6);
             inode.di_size = BitConverter.ToUInt32(array, 8);
-            inode.di_atime = BitConverter.ToInt64(array, 16);
-            inode.di_mtime = BitConverter.ToInt64(array, 24);
-            inode.di_ctime = BitConverter.ToInt64(array, 32);
+            inode.di_atime = BitConverter.ToInt64(array, 12);
+            inode.di_mtime = BitConverter.ToInt64(array, 20);
+            inode.di_ctime = BitConverter.ToInt64(array, 28);
 
 
-            for (int i = 0, curr = 40; i < inode.di_addr.Length; i++, curr += 8)
+            for (int i = 0, curr = 36; i < inode.di_addr.Length; i++, curr += 4)
             {
                 inode.di_addr[i] = BitConverter.ToUInt32(array, curr);
             }

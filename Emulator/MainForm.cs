@@ -11,43 +11,44 @@ namespace Emulator
         public MainForm()
         {
             InitializeComponent();
-            path = new();
-            objs = new();
         }
 
         private void MainForm_Load(object sender, EventArgs e)
         {
+            if (File.Exists("qwe"))
+                File.Delete("qwe");
             s5fs = S5FS.S5FS.format("qwe", 2048, 20_971_520);
+            path = new();
+            objs = new();
             var root_inode = s5fs.ReadInode(0);
             this.OpenFolder(new("", "", root_inode, null));
         }
 
-        private void Update(Obj[] objects)
+        private void UpdateTable(Obj[] objects)
         {
             textBox1.Text = StackObjToStr(this.path);
             dataGridView1.Rows.Clear();
             objs.Clear();
 
-            for (int i = 0; i < path.Count; i++)
+            for (int i = 0; i < objects.Length; i++)
             {
-                var templ = (DataGridViewRow)dataGridView1.RowTemplate.Clone();
+                dataGridView1.Rows.Add();
                 objs.Add(new KeyValuePair<int, Obj>(i, objects[i]));
 
-                templ.Cells["FileID_Column"].Value = i;
-                templ.Cells["FileType_Column"].Value = objects[i].isFolder ? "œ‡ÔÍ‡" : "‘‡ÈÎ";
-                templ.Cells["FileSize_Column"].Value = objects[i].GetSize;
-                templ.Cells["FileCreation_Column"].Value = objects[i].CreationTime;
-                templ.Cells["FileModification_Column"].Value = objects[i].ChangeDateTime;
-                templ.Cells["FileRead_Column"].Value = objects[i].ReadDateTime;
-                templ.Cells["FileOwner_Column"].Value = objects[i].UserID;
-                templ.Cells["FileUPerm_Column"].Value = objects[i].OwnerPermissions;
-                templ.Cells["FileGPerm_Column"].Value = objects[i].GroupPermissions;
-                templ.Cells["FileOPerm_Column"].Value = objects[i].OtherPermissions;
-                templ.Cells["IsSystem_Column"].Value = objects[i].IsSystem;
-                templ.Cells["IsReadOnly_Column"].Value = objects[i].IsReadOnly;
-                templ.Cells["IsVisible_Column"].Value = objects[i].IsVisible;
-
-                dataGridView1.Rows.Add(templ);
+                dataGridView1["FileID_Column", i].Value = i;
+                dataGridView1["FileName_Column", i].Value = objects[i].Name;
+                dataGridView1["FileType_Column", i].Value = objects[i].isFolder ? "œ‡ÔÍ‡" : "‘‡ÈÎ";
+                dataGridView1["FileSize_Column", i].Value = objects[i].GetSize;
+                dataGridView1["FileCreation_Column", i].Value = objects[i].CreationTime;
+                dataGridView1["FileModification_Column", i].Value = objects[i].ChangeDateTime;
+                dataGridView1["FileRead_Column", i].Value = objects[i].ReadDateTime;
+                dataGridView1["FileOwner_Column", i].Value = objects[i].UserID;
+                dataGridView1["FileUPerm_Column", i].Value = objects[i].OwnerPermissions;
+                dataGridView1["FileGPerm_Column", i].Value = objects[i].GroupPermissions;
+                dataGridView1["FileOPerm_Column", i].Value = objects[i].OtherPermissions;
+                dataGridView1["IsSystem_Column", i].Value = objects[i].IsSystem;
+                dataGridView1["IsReadOnly_Column", i].Value = objects[i].IsReadOnly;
+                dataGridView1["IsVisible_Column", i].Value = objects[i].IsVisible;
             }            
         }
 
@@ -122,6 +123,8 @@ namespace Emulator
             {
                 MessageBox.Show(exc.Message);
             }
+            var vs = this.OpenFolder(path.Peek());
+            this.UpdateTable(vs);
         }
 
         void OpenFile(Obj file)
@@ -164,9 +167,19 @@ namespace Emulator
                 return;
             }
 
-            //var isFolder = sender as 
+            var isFolder = (sender as ToolStripMenuItem) != Ù‡ÈÎToolStripMenuItem;
 
-            this.CreateFile(form.Result);
+            this.CreateFile(form.Result, isFolder);
+
+        }
+
+        /// <summary>
+        /// ƒ‡·ÎÍÎËÍ ÔÓ ÒÚÓÍÂ
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void dataGridView1_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
+        {
 
         }
     }

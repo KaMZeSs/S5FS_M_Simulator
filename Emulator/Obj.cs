@@ -169,7 +169,7 @@ namespace Emulator
 
         public Obj(string name, string path, Inode inode, Inode parent_inode)
         {
-            Name = name;
+            Name = name.Trim();
             Path = path;
             this.inode = inode;
             this.parent_inode = parent_inode;

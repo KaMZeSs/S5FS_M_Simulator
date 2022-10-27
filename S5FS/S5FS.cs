@@ -162,7 +162,7 @@ namespace S5FS
             };
             UInt32 block_num = this.bm_block.FirstEmpty();
             inode.di_addr[0] = block_num;
-            inode.di_atime = inode.di_mtime = inode.di_ctime = DateTime.Now.ToBinary();
+            inode.di_atime = inode.di_mtime = inode.di_ctime = DateTime.Now.Ticks;
             WriteInode(inode);
             //Блок не очищаю, тк в нашем случае все пусто
             
@@ -218,7 +218,7 @@ namespace S5FS
                 block.CopyTo(result, (long)(block_counter * this.sb.s_blen));
             }
 
-            inode.di_atime = DateTime.Now.ToBinary();
+            inode.di_atime = DateTime.Now.Ticks;
             this.WriteInode(inode);
 
             return result;
@@ -269,7 +269,7 @@ namespace S5FS
             {
                 var id = BitConverter.ToUInt32(splitted.Current, 0);
                 
-                var name = Encoding.Unicode.GetString(splitted.Current, 8, 64 - 8);
+                var name = Encoding.Unicode.GetString(splitted.Current, 4, 64 - 4);
                 files.Add(new(id, name));
             }
             var existing_files = from file in files where file.Key != 0 select file; // онли существующие
@@ -289,7 +289,7 @@ namespace S5FS
             {
                 var id = BitConverter.GetBytes(files[i].Key);
 
-                var str = Helper.StringExtender(files[i].Value, 28);
+                var str = Helper.StringExtender(files[i].Value, 30);
 
                 var value = Encoding.Unicode.GetBytes(str);
                 bytes.AddRange(id);
@@ -596,7 +596,7 @@ namespace S5FS
         /// <exception cref="Exception"></exception>
         public InodeInfo CreateFile(String path, String name, bool isFolder = false)
         {
-            name = Helper.StringExtender(name, 28);
+            name = Helper.StringExtender(name, 30);
             String[] parts = path.Split('\\');
             var last_Inode = this.ReadInode(0);
             var inode_bytes = this.ReadDataByInode(last_Inode);
@@ -605,7 +605,7 @@ namespace S5FS
             {
                 foreach (var part in parts) //Нахождение последнего inode в пути
                 {
-                    var vs = Helper.StringExtender(part, 28);
+                    var vs = Helper.StringExtender(part, 30);
                     var items = from fold in files_in_last_inode
                                 where fold.Value == vs
                                 select fold; // Может быть только одно имя, либо ничего
@@ -653,7 +653,7 @@ namespace S5FS
             this.sb.s_tfree--;
 
             //Если дошли сюда, значит есть свободные блоки/инод
-            long time = DateTime.Now.ToBinary();
+            long time = DateTime.Now.Ticks;
 
             ushort di_mode = (ushort)(isFolder ? 0b01_111_101_100_00000 : 0b10_111_101_100_00000); // Надо бы еще и пользователей/группы прикрутить
 
@@ -692,7 +692,7 @@ namespace S5FS
 
         public InodeInfo CreateFile(Inode root, String name, bool isFolder = false)
         {
-            name = Helper.StringExtender(name, 28);
+            name = Helper.StringExtender(name, 30);
             var root_data = this.ReadDataByInode(root);
             var files_in_root = this.GetFilesFromFolderData(root_data);
 
@@ -719,7 +719,7 @@ namespace S5FS
             this.sb.s_tfree--;
 
             //Если дошли сюда, значит есть свободные блоки/инод
-            long time = DateTime.Now.ToBinary();
+            long time = DateTime.Now.Ticks;
 
             ushort di_mode = (ushort)(isFolder ? 0b01_111_101_100_00000 : 0b10_111_101_100_00000); // Надо бы еще и пользователей/группы прикрутить
 
@@ -776,7 +776,7 @@ namespace S5FS
                 inode = this.GetInodeByPath(path.Split("\\"));
             }
 
-            var str = Helper.StringExtender(name, 28);
+            var str = Helper.StringExtender(name, 30);
                 
             var inode_bytes = this.ReadDataByInode(inode);
             var files_in_last_inode = GetFilesFromFolderData(inode_bytes);
@@ -830,7 +830,7 @@ namespace S5FS
 
         public InodeInfo OpenFile(Inode parent, String name)
         {
-            var str = Helper.StringExtender(name, 28);
+            var str = Helper.StringExtender(name, 30);
 
             var inode_bytes = this.ReadDataByInode(parent);
             var files_in_last_inode = GetFilesFromFolderData(inode_bytes);
@@ -879,7 +879,7 @@ namespace S5FS
             } //Проверка на то, чтобы хватило
 
             inode.di_size = (uint)newData.Length;
-            inode.di_atime = DateTime.Now.ToBinary();
+            inode.di_atime = DateTime.Now.Ticks;
 
             var data_to_write = Helper.Slicer(newData, this.sb.s_blen).GetEnumerator();
             data_to_write.MoveNext();
