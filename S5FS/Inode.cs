@@ -13,10 +13,10 @@ namespace S5FS
     /// </summary>
     public class Inode : ICloneable
     {
-        public const int inode_size = 128;
+        public const int inode_size = 80;
 
         /// <summary>
-        /// Тип файла, права доступа тип|rwx|rwx|rwx|reserv5bit. 2 байта.
+        /// Тип файла, права доступа тип|rwx|rwx|rwx|isSystem|isReadOnly|isHidden|2reserved. 2 байта.
         /// </summary>
         public UInt16 di_mode;
         /// <summary>
@@ -32,9 +32,9 @@ namespace S5FS
         /// </summary>
         public UInt16 di_gid;
         /// <summary>
-        /// Размер файла в байтах. 8 байт.
+        /// Размер файла в байтах. 4 байта.
         /// </summary>
-        public UInt64 di_size;
+        public UInt32 di_size;
         /// <summary>
         /// Время последнего доступа к файлу. 8 байт.
         /// </summary>
@@ -49,17 +49,17 @@ namespace S5FS
         /// </summary>
         public Int64 di_ctime;
         /// <summary>
-        /// Массив адресов дисковых блоков хранения данных. 11 элементов. 8*1 =  88 байт.
+        /// Массив адресов дисковых блоков хранения данных. 11 элементов. 4*11 =  44 байт.
         /// </summary>
-        public UInt64[] di_addr;
+        public UInt32[] di_addr;
         /// <summary>
         /// Позиция в массиве инодов
         /// </summary>
-        public UInt64 index;
+        public UInt32 index;
 
-        public Inode(UInt64 num)
+        public Inode(UInt32 num)
         {
-            this.di_addr = new UInt64[11];
+            this.di_addr = new UInt32[11];
             this.index = num;
         }
 
@@ -81,16 +81,16 @@ namespace S5FS
             Array.Copy(BitConverter.GetBytes(inode.di_nlinks), 0, bytes, 2, 2);
             Array.Copy(BitConverter.GetBytes(inode.di_uid), 0, bytes, 4, 2);
             Array.Copy(BitConverter.GetBytes(inode.di_gid), 0, bytes, 6, 2);
-            Array.Copy(BitConverter.GetBytes(inode.di_size), 0, bytes, 8, 8);
-            Array.Copy(BitConverter.GetBytes(inode.di_atime), 0, bytes, 16, 8);
-            Array.Copy(BitConverter.GetBytes(inode.di_mtime), 0, bytes, 24, 8);
-            Array.Copy(BitConverter.GetBytes(inode.di_ctime), 0, bytes, 32, 8);
+            Array.Copy(BitConverter.GetBytes(inode.di_size), 0, bytes, 8, 4);
+            Array.Copy(BitConverter.GetBytes(inode.di_atime), 0, bytes, 12, 8);
+            Array.Copy(BitConverter.GetBytes(inode.di_mtime), 0, bytes, 20, 8);
+            Array.Copy(BitConverter.GetBytes(inode.di_ctime), 0, bytes, 28, 8);
 
-            long curr = 40;
+            long curr = 36;
             foreach (var i in inode.di_addr)
             {
-                Array.Copy(BitConverter.GetBytes(i), 0, bytes, curr, 8);
-                curr += 8;
+                Array.Copy(BitConverter.GetBytes(i), 0, bytes, curr, 4);
+                curr += 4;
             }
 
             return bytes;
@@ -102,7 +102,7 @@ namespace S5FS
         /// <param name="array">Обрабатываемый массив.</param>
         /// <returns>Один инод.</returns>
         /// <exception cref="Exception"></exception>
-        public static Inode LoadFromByteArray(byte[] array, UInt64 num)
+        public static Inode LoadFromByteArray(byte[] array, UInt32 num)
         {
             if (array.Length != inode_size)
             {
@@ -115,7 +115,7 @@ namespace S5FS
             inode.di_nlinks = BitConverter.ToUInt16(array, 2);
             inode.di_uid = BitConverter.ToUInt16(array, 4);
             inode.di_gid = BitConverter.ToUInt16(array, 6);
-            inode.di_size = BitConverter.ToUInt64(array, 8);
+            inode.di_size = BitConverter.ToUInt32(array, 8);
             inode.di_atime = BitConverter.ToInt64(array, 16);
             inode.di_mtime = BitConverter.ToInt64(array, 24);
             inode.di_ctime = BitConverter.ToInt64(array, 32);
@@ -123,7 +123,7 @@ namespace S5FS
 
             for (int i = 0, curr = 40; i < inode.di_addr.Length; i++, curr += 8)
             {
-                inode.di_addr[i] = BitConverter.ToUInt64(array, curr);
+                inode.di_addr[i] = BitConverter.ToUInt32(array, curr);
             }
 
             return inode;

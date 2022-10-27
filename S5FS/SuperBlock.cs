@@ -18,21 +18,21 @@ namespace S5FS
         /// </summary>
         public Byte s_type;
         /// <summary>
-        /// Размер ФС в логических блоках (включ СуперБлок, ilist и блоки данных). 8 байт.
+        /// Размер ФС в логических блоках (включ СуперБлок, ilist и блоки данных). 4 байта.
         /// </summary>
-        public UInt64 s_fsize;
+        public UInt32 s_fsize;
         /// <summary>
-        /// Размер массива индексных дескрипторов. 8 байт.
+        /// Размер массива индексных дескрипторов. 4 байта.
         /// </summary>
-        public UInt64 s_isize;
+        public UInt32 s_isize;
         /// <summary>
-        /// Число свободных блоков, доступных для размещения. 8 байт.
+        /// Число свободных блоков, доступных для размещения. 4 байт.
         /// </summary>
-        public UInt64 s_tfree;
+        public UInt32 s_tfree;
         /// <summary>
-        /// Число свободных inode, доступных для размещения. 8 байт.
+        /// Число свободных inode, доступных для размещения. 4 байт.
         /// </summary>
-        public UInt64 s_tinode;
+        public UInt32 s_tinode;
         /// <summary>
         /// Флаг модификации. 1 байт.
         /// </summary>
@@ -49,16 +49,16 @@ namespace S5FS
         /// </summary>
         /// <param name="disk_size">Размер выделенного пространства на диске в байтах.</param>
         /// <param name="s_blen">Размер одного блока данных.</param>
-        public SuperBlock(UInt64 disk_size, UInt32 s_blen)
+        public SuperBlock(UInt32 disk_size, UInt32 s_blen)
         {
             this.s_type = 0xFA;
             this.s_blen = s_blen;
             this.s_fmod = 0xFF;
 
             //Получаем к-во inode
-            this.s_isize = this.s_tinode = (disk_size - 2048) / 16 / Inode.inode_size;
+            this.s_isize = this.s_tinode = (disk_size - 2048) / 64 / Inode.inode_size;
 
-            UInt64 left_disk_size = disk_size - (s_isize * Inode.inode_size) - SuperBlock.superblock_size;
+            UInt32 left_disk_size = disk_size - (s_isize * Inode.inode_size) - SuperBlock.superblock_size;
             
             this.s_tfree = left_disk_size / this.s_blen;
             this.s_fsize = this.s_tfree + 2;
@@ -74,12 +74,12 @@ namespace S5FS
             var superBlock = new byte[SuperBlock.superblock_size];
 
             superBlock[0] = sb.s_type; //Array.Copy(BitConverter.GetBytes(sb.s_type), 0, superBlock, 0, 1);
-            Array.Copy(BitConverter.GetBytes(sb.s_fsize), 0, superBlock, 1, 8);
-            Array.Copy(BitConverter.GetBytes(sb.s_isize), 0, superBlock, 9, 8);
-            Array.Copy(BitConverter.GetBytes(sb.s_tfree), 0, superBlock, 17, 8);
-            Array.Copy(BitConverter.GetBytes(sb.s_tinode), 0, superBlock, 25, 8);
-            superBlock[33] = sb.s_fmod; //Array.Copy(BitConverter.GetBytes(sb.s_fmod), 0, superBlock, 33, 1);
-            Array.Copy(BitConverter.GetBytes(sb.s_blen), 0, superBlock, 34, 4);
+            Array.Copy(BitConverter.GetBytes(sb.s_fsize), 0, superBlock, 1, 4);
+            Array.Copy(BitConverter.GetBytes(sb.s_isize), 0, superBlock, 5, 4);
+            Array.Copy(BitConverter.GetBytes(sb.s_tfree), 0, superBlock, 9, 4);
+            Array.Copy(BitConverter.GetBytes(sb.s_tinode), 0, superBlock, 13, 4);
+            superBlock[17] = sb.s_fmod; //Array.Copy(BitConverter.GetBytes(sb.s_fmod), 0, superBlock, 33, 1);
+            Array.Copy(BitConverter.GetBytes(sb.s_blen), 0, superBlock, 18, 4);
 
 
             return superBlock;
@@ -100,12 +100,12 @@ namespace S5FS
             }
 
             sb.s_type = array[0];
-            sb.s_fsize = BitConverter.ToUInt64(array, 1);
-            sb.s_isize = BitConverter.ToUInt64(array, 9);
-            sb.s_tfree = BitConverter.ToUInt64(array, 17);
-            sb.s_tinode = BitConverter.ToUInt64(array, 25);
-            sb.s_fmod = array[33];
-            sb.s_blen = BitConverter.ToUInt32(array, 34);
+            sb.s_fsize = BitConverter.ToUInt32(array, 1);
+            sb.s_isize = BitConverter.ToUInt32(array, 5);
+            sb.s_tfree = BitConverter.ToUInt32(array, 9);
+            sb.s_tinode = BitConverter.ToUInt32(array, 13);
+            sb.s_fmod = array[17];
+            sb.s_blen = BitConverter.ToUInt32(array, 18);
 
             return sb;
         }

@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using S5FS;
+
 namespace Emulator
 {
     /// <summary>
@@ -31,7 +33,7 @@ namespace Emulator
         /// <summary>
         /// Имя файла.
         /// </summary>
-        public string Name { get; set; }
+        public string Name { get; }
         ///// <summary>
         ///// Путь к файлу.
         ///// </summary>
@@ -69,7 +71,7 @@ namespace Emulator
         /// <summary>
         /// Размер файла.
         /// </summary>
-        public ulong GetSize
+        public UInt32 GetSize
         {
             get
             {
@@ -97,20 +99,64 @@ namespace Emulator
             }
         }
 
-        /// <summary>
-        /// Массив байт содержимого файла.
-        /// </summary>
-        protected byte[] data;
+        public byte OwnerPermissions
+        {
+            get
+            {
+                return 0;
+            }
+        }
+        public byte GroupPermissions
+        {
+            get
+            {
+                return 0;
+            }
+        }
+        public byte OtherPermissions
+        {
+            get
+            {
+                return 0;
+            }
+        }
+
+        public bool IsSystem
+        {
+            get
+            {
+                return false;
+            }
+        }
+        public bool IsVisible
+        {
+            get
+            {
+                return true;
+            }
+        }
+        public bool IsReadOnly
+        {
+            get
+            {
+                return false;
+            }
+        }
+
+        ///// <summary>
+        ///// Массив байт содержимого файла.
+        ///// </summary>
+        //protected byte[] data;
         /// <summary>
         /// Инод файла.
         /// Из него получены все свойства файла, кроме пути и имени.
         /// </summary>
-        protected S5FS.Inode inode;
+        public S5FS.Inode inode;
         /// <summary>
         /// Родительский инод.
         /// Нужен для удобного переименования файла.
         /// </summary>
-        protected S5FS.Inode parent_inode;
+        public S5FS.Inode parent_inode;
 
         public static byte[] StringToByteArr(String str)
         {
@@ -119,6 +165,14 @@ namespace Emulator
         public static String ByteArrToString(byte[] arr)
         {
             return Encoding.Unicode.GetString(arr);
+        }
+
+        public Obj(string name, string path, Inode inode, Inode parent_inode)
+        {
+            Name = name;
+            Path = path;
+            this.inode = inode;
+            this.parent_inode = parent_inode;
         }
     }
 }
