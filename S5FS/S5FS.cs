@@ -89,7 +89,7 @@ namespace S5FS
             {
                 throw new ArgumentOutOfRangeException();
             }
-            UInt32 currBlock_pos = (UInt32)this.blocks_offset + num * this.sb.s_blen;
+            UInt64 currBlock_pos = this.blocks_offset + (UInt64)num * this.sb.s_blen;
             //Записываем в блок
             this.Seek(currBlock_pos, SeekOrigin.Begin);
             fs.Write(bytes);
@@ -102,19 +102,19 @@ namespace S5FS
         /// <param name="num"></param>
         /// <param name="seekOrigin"></param>
         /// <exception cref="Exception"></exception>
-        private void Seek(UInt32 num, SeekOrigin seekOrigin)
+        private void Seek(UInt64 num, SeekOrigin seekOrigin)
         {
             if (seekOrigin is SeekOrigin.End)
             {
                 throw new Exception("Мы так не работаем");
             }
             fs.Seek(0, seekOrigin);
-            while (num > Int32.MaxValue)
+            while (num > Int64.MaxValue)
             {
-                num -= Int32.MaxValue;
-                fs.Seek(Int32.MaxValue, SeekOrigin.Current);
+                num -= Int64.MaxValue;
+                fs.Seek(Int64.MaxValue, SeekOrigin.Current);
             }
-            fs.Seek((Int32)num, SeekOrigin.Current);
+            fs.Seek((Int64)num, SeekOrigin.Current);
         }
 
         /// <summary>
@@ -448,6 +448,8 @@ namespace S5FS
         {
             S5FS s5FS = new();
             s5FS.fs = new(file, FileMode.OpenOrCreate, FileAccess.ReadWrite);
+            s5FS.fs.Seek(disk_size, SeekOrigin.Begin);
+            s5FS.fs.Seek(0, SeekOrigin.Begin);
 
             //Суперблок
             s5FS.sb = new(disk_size: disk_size, s_blen: s_blen);
@@ -469,9 +471,9 @@ namespace S5FS
 
             // Выделить место под блоки данных
             // Потом, когда все будет работать, выделить больше до полного размера
-            var block_bytes = new byte[s5FS.sb.s_blen * (s5FS.sb.s_fsize - 2)];
-            s5FS.fs.Write(block_bytes);
-            s5FS.fs.Flush();
+            //var block_bytes = new byte[s5FS.sb.s_blen * (s5FS.sb.s_fsize - 2)];
+            //s5FS.fs.Write(block_bytes);
+            //s5FS.fs.Flush();
 
             //Создание битмапов
             UInt32 inode_bm_len = s5FS.sb.s_isize / 8;
@@ -767,6 +769,30 @@ namespace S5FS
             return new(parent, inode_to_open, data);
         }
 
+        public UInt32 GetAddressesBlocksNeed(UInt32 block_num)
+        {
+            UInt32 result = 0;
+            if (block_num <= 10)
+            {
+                return 0;
+            }
+            else if (block_num <= 10 + this.addr_in_block)
+            {
+                return 1;
+            }
+            else
+            {
+                var temp = block_num - 10 - this.addr_in_block;
+                var temp_res = temp / this.addr_in_block;
+                if (temp % this.addr_in_block is not 0)
+                {
+                    temp_res++;
+                }
+
+                return 1 + 1 + temp_res;
+            }
+        }
+
         /// <summary>
         /// Возможно рабочий метод записи/перезаписи/добавления инфы по иноду
         /// </summary>
@@ -789,8 +815,8 @@ namespace S5FS
                 throw new OutOfMemoryException();
             }
 
-            UInt32 prev_addresses_for_blocks = (uint)(this.sb.s_blen * 10 < block_num ? 1 : 0);
-            UInt32 new_addresses_for_blocks = (uint)(this.sb.s_blen * 10 < new_block_num ? 1 : 0);
+            UInt32 prev_addresses_for_blocks = GetAddressesBlocksNeed(block_num);
+            UInt32 new_addresses_for_blocks = GetAddressesBlocksNeed(new_block_num);
 
             //После этого можно считать, что памяти хватит
             if (new_block_num > block_num)
@@ -845,6 +871,34 @@ namespace S5FS
                             blocks_to_write--;
                         } // Просто считал адресы. Записал существующие. Если закончились блоки (я хз как, но а вдруг) - вышел раньше.
                     }
+                    else if (i is 11) // 2й уровень. Блоки те же
+                    {
+                        var existing_addresses_1st = this.GetAddressesFromBlock(this.ReadFromDataBlock(inode.di_addr[i]))
+                            .Where(x => x is not 0).GetEnumerator();
+
+                        while (existing_addresses_1st.MoveNext())
+                        {
+                            if (blocks_to_write is 0)
+                            {
+                                break;
+                            }
+                            var existing_addresses_2nd = this.GetAddressesFromBlock(this.ReadFromDataBlock(existing_addresses_1st.Current))
+                                .Where(x => x is not 0).GetEnumerator();
+
+                            while (existing_addresses_2nd.MoveNext())
+                            {
+                                if (blocks_to_write is 0)
+                                {
+                                    break;
+                                }
+                                
+                                this.WriteToDataBlock(data_to_write.Current, existing_addresses_2nd.Current);
+                                
+                                data_to_write.MoveNext();
+                                blocks_to_write--;
+                            }
+                        }
+                    }
                     else
                     {
                         bm_block = (BitMap)bm_block_temp.Clone();
@@ -891,12 +945,17 @@ namespace S5FS
                     }
                     else if (i is 10) // 1й уровень. Блоки те же.
                     {
+                        UInt32[] existing_addresses;
                         if (existing_blocks is 0) // Создаем блок для 1го уровня
                         {
                             inode.di_addr[i] = this.bm_block.FirstEmpty();
+                            existing_addresses = new UInt32[addr_in_block];
                             this.sb.s_tfree--;
                         }
-                        var existing_addresses = this.GetAddressesFromBlock(this.ReadFromDataBlock(inode.di_addr[i]));
+                        else
+                        {
+                            existing_addresses = this.GetAddressesFromBlock(this.ReadFromDataBlock(inode.di_addr[i]));
+                        }
 
                         for (int j = 0; j < existing_addresses.Length; j++)
                         {
@@ -921,6 +980,65 @@ namespace S5FS
                             blocks_to_write--;
                         }
                         this.WriteToDataBlock(this.AddressesToBlock(existing_addresses), inode.di_addr[i]);
+                    }
+                    else if (i is 11)
+                    {
+                        UInt32[] existing_addresses_1st;
+                        if (existing_blocks is 0) // Создаем блок для 1го уровня
+                        {
+                            inode.di_addr[i] = this.bm_block.FirstEmpty();
+                            existing_addresses_1st = new UInt32[addr_in_block];
+                            this.sb.s_tfree--;
+                        }
+                        else
+                        {
+                            existing_addresses_1st = this.GetAddressesFromBlock(this.ReadFromDataBlock(inode.di_addr[i]));
+                        }
+                        
+
+                        for (int j = 0; j < existing_addresses_1st.Length; j++)
+                        {
+                            if (blocks_to_write is 0)
+                            {
+                                break;
+                            }
+                            UInt32[] existing_addresses_2nd;
+                            if (existing_blocks is 0) // Добавляем блок 2го уровня
+                            {
+                                existing_addresses_1st[j] = this.bm_block.FirstEmpty();
+                                existing_addresses_2nd = new UInt32[addr_in_block];
+                                this.sb.s_tfree--;
+                            }
+                            else
+                            {
+                                existing_addresses_2nd = this.GetAddressesFromBlock(this.ReadFromDataBlock(existing_addresses_1st[j]));
+                            }                            
+
+                            for (int k = 0; k < existing_addresses_2nd.Length; k++)
+                            {
+                                if (blocks_to_write is 0)
+                                {
+                                    break;
+                                }
+                                if (existing_blocks is 0) // Больше некуда
+                                {
+                                    var newBlock = this.bm_block.FirstEmpty();
+                                    existing_addresses_2nd[k] = newBlock;
+                                    this.WriteToDataBlock(data_to_write.Current, newBlock);
+                                    this.sb.s_tfree--;
+                                }
+                                else // Еще есть куда записывать
+                                {
+                                    this.WriteToDataBlock(data_to_write.Current, existing_addresses_2nd[k]);
+                                    existing_blocks--;
+                                }
+
+                                data_to_write.MoveNext();
+                                blocks_to_write--;
+                            }
+                            this.WriteToDataBlock(this.AddressesToBlock(existing_addresses_2nd), existing_addresses_1st[j]);
+                        }
+                        this.WriteToDataBlock(this.AddressesToBlock(existing_addresses_1st), inode.di_addr[i]);
                     }
                     else
                     {
@@ -959,27 +1077,98 @@ namespace S5FS
                     }
                     else if (i is 10) // 1й уровень. Блоки те же.
                     {
+                        if (inode.di_addr[i] is 0) // Дальше уже не будет
+                        {
+                            break;
+                        }
                         var addresses = this.GetAddressesFromBlock(this.ReadFromDataBlock(inode.di_addr[i]));
                         
                         for (int j = 0; j < addresses.Length; j++)
                         {
                             if (blocks_to_write is not 0)
                             {
-                                this.WriteToDataBlock(data_to_write.Current, inode.di_addr[i]);
+                                this.WriteToDataBlock(data_to_write.Current, addresses[j]);
                                 blocks_to_write--;
                             }
                             else
                             {
-                                if (inode.di_addr[i] is 0) // Дальше уже не будет
+                                if (addresses[j] is 0) // Дальше уже не будет
                                 {
                                     break;
                                 }
-                                this.bm_block.ChangeBlockState(inode.di_addr[i], true);
-                                inode.di_addr[i] = 0;
+                                this.bm_block.ChangeBlockState(addresses[j], true);
+                                addresses[j] = 0;
                                 this.sb.s_tfree++;
                             }
 
                             data_to_write.MoveNext();
+                        }
+
+                        this.WriteToDataBlock(this.AddressesToBlock(addresses), inode.di_addr[i]);
+
+                        if (addresses.Count(x => x is not 0) is 0) // Если уровень удален полностью (только 0)
+                        {
+                            this.bm_block.ChangeBlockState(inode.di_addr[i], true);
+                            inode.di_addr[i] = 0;
+                            this.sb.s_tfree++;
+                        }
+                    }
+                    else if (i is 11)
+                    {
+                        if (inode.di_addr[i] is 0) // Дальше уже не будет
+                        {
+                            break;
+                        }
+
+                        var addresses_1st = this.GetAddressesFromBlock(this.ReadFromDataBlock(inode.di_addr[i]));
+
+                        for (int j = 0; j < addresses_1st.Length; j++) // Берем адреса из 1го уровня
+                        {
+                            if (addresses_1st[j] is 0) // Дальше уже не будет
+                            {
+                                break;
+                            }
+
+                            var addresses_2nd = this.GetAddressesFromBlock(this.ReadFromDataBlock(addresses_1st[j])); // Блок адресов 2го уровня
+
+                            for (int k = 0; k < addresses_2nd.Length; k++)
+                            {
+                                if (blocks_to_write is not 0)
+                                {
+                                    this.WriteToDataBlock(data_to_write.Current, addresses_2nd[k]);
+                                    blocks_to_write--;
+                                }
+                                else
+                                {
+                                    if (addresses_2nd[k] is 0) // Дальше уже не будет
+                                    {
+                                        break;
+                                    }
+                                    this.bm_block.ChangeBlockState(addresses_2nd[k], true);
+                                    addresses_2nd[k] = 0;
+                                    this.sb.s_tfree++;
+                                }
+
+                                data_to_write.MoveNext();
+                            }
+
+                            this.WriteToDataBlock(this.AddressesToBlock(addresses_2nd), addresses_1st[j]);
+
+                            if (addresses_2nd.Count(x => x is not 0) is 0) // Если уровень удален полностью (только 0)
+                            {
+                                this.bm_block.ChangeBlockState(addresses_1st[j], true);
+                                addresses_1st[j] = 0;
+                                this.sb.s_tfree++;
+                            }
+                        }
+
+                        this.WriteToDataBlock(this.AddressesToBlock(addresses_1st), inode.di_addr[i]);
+
+                        if (addresses_1st.Count(x => x is not 0) is 0) // Если уровень удален полностью (только 0)
+                        {
+                            this.bm_block.ChangeBlockState(inode.di_addr[i], true);
+                            inode.di_addr[i] = 0;
+                            this.sb.s_tfree++;
                         }
                     }
                     else

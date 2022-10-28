@@ -5,7 +5,7 @@ VisualStudioVersion = 17.3.32804.467
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "S5FS", "S5FS\S5FS.csproj", "{686A5EE7-CB85-40D1-ADD5-C0489AF05483}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Emulator", "Emulator\Emulator.csproj", "{15362B25-D19F-4DD5-B8C6-713346E1C4BD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Emulator", "Emulator\Emulator.csproj", "{15362B25-D19F-4DD5-B8C6-713346E1C4BD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

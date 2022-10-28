@@ -8,6 +8,8 @@ namespace Emulator
         private List<KeyValuePair<int, Obj>> objs;
         S5FS.S5FS s5fs;
 
+        ѕроверить работоспособность записи данных (добавил второй уровень)
+        ќсобенно при записи меньшего к-ва блоков большого файла
         public MainForm()
         {
             InitializeComponent();
