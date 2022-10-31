@@ -8,8 +8,6 @@ namespace Emulator
         private List<KeyValuePair<int, Obj>> objs;
         S5FS.S5FS s5fs;
 
-        Проверить работоспособность записи данных (добавил второй уровень)
-        Особенно при записи меньшего к-ва блоков большого файла
         public MainForm()
         {
             InitializeComponent();
@@ -19,7 +17,7 @@ namespace Emulator
         {
             if (File.Exists("qwe"))
                 File.Delete("qwe");
-            s5fs = S5FS.S5FS.format("qwe", 2048, 20_971_520);
+            s5fs = S5FS.S5FS.format("qwe", 2048, 52_428_800);
             path = new();
             objs = new();
             var root_inode = s5fs.ReadInode(0);
@@ -183,6 +181,20 @@ namespace Emulator
                 }
             }
         }
+        
+        void DeleteFIle(Obj file)
+        {
+            try
+            {
+                Все не так
+                Надо сделать метод удаления, который уменьшит число ссылок на 1, если стало 0 - очистит блоки;
+                s5fs.ReleaseBlocksByInode(file.inode);
+            }
+            catch (Exception exc)
+            {
+                MessageBox.Show(exc.Message);
+            }
+        }
 
         String[] GetFileNamesInCurr()
         {
@@ -245,6 +257,30 @@ namespace Emulator
             }
             path.Pop();
             var vs = this.OpenFolder(path.Pop());
+            this.UpdateTable(vs);
+        }
+
+        private void удалитьToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            for (int i = 0; i < dataGridView1.SelectedRows.Count; i++)
+            {
+                var index = (int)dataGridView1["FileID_Column", dataGridView1.SelectedRows[i].Index].Value;
+                var objects = this.objs.Where(x => x.Key == index);
+                if (objects.Count() is 0)
+                    throw new Exception("IDK What's going on");
+                var file = objects.First().Value;
+
+                try
+                {
+                    this.DeleteFIle(file);
+                }
+                catch(Exception exc)
+                {
+                    MessageBox.Show(exc.Message);
+                }
+            }
+
+            var vs = this.UpdateFolder();
             this.UpdateTable(vs);
         }
     }

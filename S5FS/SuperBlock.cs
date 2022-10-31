@@ -56,7 +56,7 @@ namespace S5FS
             this.s_blen = s_blen;
             this.s_fmod = 0xFF;
 
-            SuperBlock.max_blocks_per_file = 10 + s_blen / sizeof(UInt32);
+            SuperBlock.max_blocks_per_file = 10 + s_blen / sizeof(UInt32) + s_blen / sizeof(UInt32) * s_blen / sizeof(UInt32);
 
             //Получаем к-во inode
             this.s_isize = this.s_tinode = (disk_size - 2048) / 64 / Inode.inode_size;

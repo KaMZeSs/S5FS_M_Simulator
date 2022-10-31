@@ -387,13 +387,13 @@ namespace S5FS
         /// Мб работающий метод удаления файла по иноду
         /// </summary>
         /// <param name="inode"></param>
-        private void ReleaseBlocksByInode(Inode inode)
+        public void ReleaseBlocksByInode(Inode inode)
         {
             UInt32 block_num = inode.di_size % this.sb.s_blen == 0 ?
                 inode.di_size / this.sb.s_blen :
                 (inode.di_size / this.sb.s_blen + 1);
 
-            for (UInt32 i = 0; i < 11; i++)
+            for (UInt32 i = 0; i < 12; i++)
             {
                 if (block_num is 0)
                 {
@@ -406,7 +406,7 @@ namespace S5FS
                     inode.di_addr[i] = 0;
                     block_num--;
                 }
-                if (i == 10)
+                if (i is 10)
                 {
                     if (block_num is 0)
                     {
@@ -415,20 +415,52 @@ namespace S5FS
                     this.bm_block.ChangeBlockState(inode.di_addr[i], true);
                     this.sb.s_tfree++;
                     inode.di_addr[i] = 0;
-                    var existing_addresses = this.GetAddressesFromBlock(this.ReadFromDataBlock(inode.di_addr[i]))
-                            .Where(x => x is not 0).GetEnumerator();
-                    while (existing_addresses.MoveNext())
+                    var existing_addresses = this.GetAddressesFromBlock(this.ReadFromDataBlock(inode.di_addr[i]));
+                    for (int j = 0; j < existing_addresses.Length; j++)
                     {
                         if (block_num is 0)
                         {
                             break;
                         }
-                        this.bm_block.ChangeBlockState(existing_addresses.Current, true);
+                        this.bm_block.ChangeBlockState(existing_addresses[j], true);
                         this.sb.s_tfree++;
                         block_num--;
                     }
                 }
+                if (i is 11)
+                {
+                    if (block_num is 0)
+                    {
+                        break;
+                    }
+                    this.bm_block.ChangeBlockState(inode.di_addr[i], true);
+                    this.sb.s_tfree++;
+                    inode.di_addr[i] = 0;
+                    var existing_addresses_1 = this.GetAddressesFromBlock(this.ReadFromDataBlock(inode.di_addr[i]));
+                    for (int j = 0; j < existing_addresses_1.Length; j++)
+                    {
+                        if (block_num is 0)
+                        {
+                            break;
+                        }
+                        this.bm_block.ChangeBlockState(inode.di_addr[j], true);
+                        this.sb.s_tfree++;
+                        var existing_addresses_2 = this.GetAddressesFromBlock(this.ReadFromDataBlock(existing_addresses_1[j]));
+                        for (int k = 0; k < existing_addresses_2.Length; k++)
+                        {
+                            if (block_num is 0)
+                            {
+                                break;
+                            }
+                            this.bm_block.ChangeBlockState(existing_addresses_2[k], true);
+                            this.sb.s_tfree++;
+                            block_num--;
+                        }
+                    }
+                }
             }
+
+            inode.di_addr = new UInt32[12];
 
             inode.di_mode = 0;
             this.WriteInode(inode);
@@ -468,12 +500,6 @@ namespace S5FS
             s5FS.fs.Flush();
 
             s5FS.blocks_offset = (UInt32)buffer.LongLength + SuperBlock.superblock_size;
-
-            // Выделить место под блоки данных
-            // Потом, когда все будет работать, выделить больше до полного размера
-            //var block_bytes = new byte[s5FS.sb.s_blen * (s5FS.sb.s_fsize - 2)];
-            //s5FS.fs.Write(block_bytes);
-            //s5FS.fs.Flush();
 
             //Создание битмапов
             UInt32 inode_bm_len = s5FS.sb.s_isize / 8;
@@ -1171,12 +1197,17 @@ namespace S5FS
                             this.sb.s_tfree++;
                         }
                     }
-                    else
+                    else if(blocks_to_write is not 0)
                     {
+                        
                         bm_block = (BitMap)bm_block_temp.Clone();
                         bm_inode = (BitMap)bm_inode_temp.Clone();
                         sb = (SuperBlock)sb_temp.Clone();
                         throw new OutOfMemoryException("Карамба");
+                    }
+                    else
+                    {
+                        break;
                     }
                 }
             } // К-во блоков стало меньше

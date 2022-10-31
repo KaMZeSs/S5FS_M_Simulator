@@ -13,7 +13,7 @@ namespace S5FS
     /// </summary>
     public class Inode : ICloneable
     {
-        public const int inode_size = 80;
+        public const int inode_size = 84;
 
         /// <summary>
         /// Тип файла, права доступа тип|rwx|rwx|rwx|isSystem|isReadOnly|isHidden|2reserved. 2 байта.
@@ -49,7 +49,7 @@ namespace S5FS
         /// </summary>
         public Int64 di_ctime;
         /// <summary>
-        /// Массив адресов дисковых блоков хранения данных. 11 элементов. 4*11 =  44 байт.
+        /// Массив адресов дисковых блоков хранения данных. 12 элементов. 4*12 =  48 байт.
         /// </summary>
         public UInt32[] di_addr;
         /// <summary>
@@ -59,7 +59,7 @@ namespace S5FS
 
         public Inode(UInt32 num)
         {
-            this.di_addr = new UInt32[11];
+            this.di_addr = new UInt32[12];
             this.index = num;
         }
 
