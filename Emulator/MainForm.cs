@@ -1,5 +1,7 @@
 using System.Text;
 
+using S5FS;
+
 namespace Emulator
 {
     public partial class MainForm : Form
@@ -21,7 +23,7 @@ namespace Emulator
             path = new();
             objs = new();
             var root_inode = s5fs.ReadInode(0);
-            this.OpenFolder(new("", "", root_inode, null));
+            this.OpenFolder(new("", root_inode, null));
         }
 
         private void UpdateTable(Obj[] objects)
@@ -83,7 +85,7 @@ namespace Emulator
             var root_data = s5fs.ReadDataByInode(root_inode);
             var files = s5fs.GetFilesFromFolderData(root_data);
 
-            var root_obj = new Obj("", "", root_inode, null);
+            var root_obj = new Obj("", root_inode, null);
 
             objs.Clear();
             path.Push(root_obj);
@@ -94,7 +96,7 @@ namespace Emulator
             {
                 var file_inode = s5fs.ReadInode(file.Key);
 
-                file_objs.Add(new(file.Value, this.StackObjToStr(path), file_inode, root_inode));
+                file_objs.Add(new(file.Value, file_inode, root_inode));
             }
 
             return file_objs.ToArray();
@@ -106,7 +108,7 @@ namespace Emulator
             var root_data = s5fs.ReadDataByInode(root_inode);
             var files = s5fs.GetFilesFromFolderData(root_data);
 
-            var root_obj = new Obj("", "", root_inode, null);
+            var root_obj = new Obj("", root_inode, null);
 
             objs.Clear();
 
@@ -116,7 +118,7 @@ namespace Emulator
             {
                 var file_inode = s5fs.ReadInode(file.Key);
 
-                file_objs.Add(new(file.Value, this.StackObjToStr(path), file_inode, root_inode));
+                file_objs.Add(new(file.Value, file_inode, root_inode));
             }
 
             return file_objs.ToArray();
@@ -182,17 +184,87 @@ namespace Emulator
             }
         }
         
+
+        // Говно идея
+        // Лучше юзать метод ниже
+        // А потом удалять каждый отдельно без проверок и тд
         void DeleteFIle(Obj file)
         {
+            
             try
             {
+                DialogResult d_result;
+                if (!file.isFolder)
+                {
+                     d_result = MessageBox.Show($"Будет удален файл: {file.Name}, занимающий {file.GetSize} байт.",
+                        "Вы точно хотите удалить фалй?", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                    if (d_result is DialogResult.No)
+                        return;
+                    s5fs.DeleteFileLinkFromDirectory(file.parent_inode, file.inode);
+                    return;
+                }
+                // Если папка - рекурсивно иду вглубину
+                // Для удаления вроде надо с конца удалять
+                var objs_to_delete = this.GetObjsInFolder(file).ToList();
+                objs_to_delete.Reverse();
 
-                s5fs.ReleaseBlocksByInode(file.inode);
+                var test = objs_to_delete.Sum(x => x.GetSize);
+
+                d_result = MessageBox.Show($"Будет удалено файлов: {objs_to_delete.Count}, занимающих {test} байт.",
+                    "Вы точно хотите удалить папку?", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                if (d_result is DialogResult.No)
+                    return;
+                
+                foreach(var obj in objs_to_delete)
+                {
+                    s5fs.DeleteFileLinkFromDirectory(obj.parent_inode, obj.inode);
+                }
+
+                s5fs.DeleteFileLinkFromDirectory(file.parent_inode, file.inode);
             }
             catch (Exception exc)
             {
                 MessageBox.Show(exc.Message);
             }
+        }
+
+        Obj[] GetObjsInFolder(Obj root_obj)
+        {
+            var root_data = s5fs.ReadDataByInode(root_obj.inode);
+            var files = s5fs.GetFilesFromFolderData(root_data);
+
+            List<Obj> file_objs = new();
+
+            foreach (var file in files)
+            {
+                var file_inode = s5fs.ReadInode(file.Key);
+
+                file_objs.Add(new(file.Value, file_inode, root_obj.inode));
+
+                if (file_objs.Last().isFolder)
+                    file_objs.AddRange(this.GetObjsInFolder(file_objs.Last()));
+            }
+
+            return file_objs.ToArray();
+        }
+
+        Obj[] GetChildObjects(Obj[] files)
+        {
+            List<Obj> objs = new();
+
+            foreach (var file in files)
+            {
+                if (file.isFolder)
+                {
+                    objs.AddRange(this.GetObjsInFolder(file));
+                }
+                else
+                {
+                    objs.Add(file);
+                }
+            }
+
+            return objs.ToArray();
         }
 
         String[] GetFileNamesInCurr()

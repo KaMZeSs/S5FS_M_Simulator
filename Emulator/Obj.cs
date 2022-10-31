@@ -34,10 +34,10 @@ namespace Emulator
         /// Имя файла.
         /// </summary>
         public string Name { get; }
-        ///// <summary>
-        ///// Путь к файлу.
-        ///// </summary>
-        public string Path { get; }
+        /////// <summary>
+        /////// Путь к файлу.
+        /////// </summary>
+        //public string Path { get; }
         /// <summary>
         /// Дата и время последнего изменения файла.
         /// </summary>
@@ -167,10 +167,9 @@ namespace Emulator
             return Encoding.Unicode.GetString(arr);
         }
 
-        public Obj(string name, string path, Inode inode, Inode parent_inode)
+        public Obj(string name, Inode inode, Inode parent_inode)
         {
             Name = name.Trim();
-            Path = path;
             this.inode = inode;
             this.parent_inode = parent_inode;
         }

@@ -387,7 +387,7 @@ namespace S5FS
         /// Мб работающий метод удаления файла по иноду
         /// </summary>
         /// <param name="inode"></param>
-        public void ReleaseBlocksByInode(Inode inode)
+        private void ReleaseBlocksByInode(Inode inode)
         {
             UInt32 block_num = inode.di_size % this.sb.s_blen == 0 ?
                 inode.di_size / this.sb.s_blen :
@@ -469,7 +469,29 @@ namespace S5FS
             this.WriteSuperBlock();
         }
 
-        private void DeleteFileLinkFromDirectory(Inode parentFolder, Inode inode)
+        public Inode[] GetFilesFromInode(Inode inode)
+        {
+            var data = this.ReadDataByInode(inode);
+            var pairs = this.GetFilesFromFolderData(data);
+
+            List<Inode> result = new List<Inode>();
+
+            foreach(var pair in pairs)
+            {
+                result.Add(new(pair.Key));
+            }
+
+            return result.ToArray();
+        }
+        
+
+        /// <summary>
+        /// Удалить ссылку на файл из папки
+        /// Если ссылок больше нет, то удалить блоки
+        /// </summary>
+        /// <param name="parentFolder"></param>
+        /// <param name="inode"></param>
+        public void DeleteFileLinkFromDirectory(Inode parentFolder, Inode inode)
         {
             var parent_inode_bytes = this.ReadDataByInode(parentFolder);
             var files_in_parent_inode = GetFilesFromFolderData(parent_inode_bytes).ToList();
