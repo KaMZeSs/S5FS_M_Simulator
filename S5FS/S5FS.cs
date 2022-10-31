@@ -469,6 +469,35 @@ namespace S5FS
             this.WriteSuperBlock();
         }
 
+        private void DeleteFileLinkFromDirectory(Inode parentFolder, Inode inode)
+        {
+            var parent_inode_bytes = this.ReadDataByInode(parentFolder);
+            var files_in_parent_inode = GetFilesFromFolderData(parent_inode_bytes).ToList();
+            
+            for (int i = 0; i < files_in_parent_inode.Count; i++)
+            {
+                if (files_in_parent_inode[i].Key == inode.index)
+                {
+                    files_in_parent_inode.RemoveAt(i);
+                    break;
+                }
+            }
+
+            //Теперь надо перезаписать на диск
+            parent_inode_bytes = this.DictToFolderData(files_in_parent_inode.ToArray());
+            //Размер мог стать меньше предыдущего к-ва кластеров
+            this.WriteDataByInode(parentFolder, parent_inode_bytes);
+
+            inode.di_nlinks--;
+
+            if (inode.di_nlinks is 0) // Если больше нет ссылок - очистить блоки
+            {
+                this.ReleaseBlocksByInode(inode);
+            }
+
+            this.WriteInode(inode);
+        }
+
         /// <summary>
         /// Создание новой файловой системы.
         /// </summary>

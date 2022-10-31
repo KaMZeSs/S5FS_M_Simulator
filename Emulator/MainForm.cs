@@ -186,8 +186,7 @@ namespace Emulator
         {
             try
             {
-                ¬се не так
-                Ќадо сделать метод удалени€, который уменьшит число ссылок на 1, если стало 0 - очистит блоки;
+
                 s5fs.ReleaseBlocksByInode(file.inode);
             }
             catch (Exception exc)
