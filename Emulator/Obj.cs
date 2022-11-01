@@ -27,7 +27,6 @@ namespace Emulator
                     case S5FS.InodeTypeEnum.File: return false;
                 }
                 throw new Exception();
-                
             }
         }
         /// <summary>

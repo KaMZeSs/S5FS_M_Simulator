@@ -37,6 +37,13 @@ namespace S5FS
         BitMap bm_inode_temp;
 
         SuperBlock sb_temp;
+        public SuperBlock SuperBlock
+        {
+            get
+            {
+                return this.sb.Clone() as SuperBlock;
+            }
+        }
 
 
         public UInt32 max_file_size { get; private set; }

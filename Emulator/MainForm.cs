@@ -2,6 +2,8 @@ using System.Text;
 
 using S5FS;
 
+using static System.Net.Mime.MediaTypeNames;
+
 namespace Emulator
 {
     public partial class MainForm : Form
@@ -56,11 +58,12 @@ namespace Emulator
 
         private String StackObjToStr(Stack<Obj> path)
         {
-            var arr = path.ToArray();
+            var arr = path.ToList();
+            arr.Reverse();
             StringBuilder sb = new StringBuilder();
 
 
-            foreach (var obj in path)
+            foreach (var obj in arr)
             {
                 if (obj.Name.Length is 0)
                 {
@@ -85,10 +88,10 @@ namespace Emulator
             var root_data = s5fs.ReadDataByInode(root_inode);
             var files = s5fs.GetFilesFromFolderData(root_data);
 
-            var root_obj = new Obj("", root_inode, null);
+            //var root_obj = new Obj("", root_inode, null);
 
             objs.Clear();
-            path.Push(root_obj);
+            path.Push(folder);
 
             List<Obj> file_objs = new();
 
@@ -183,51 +186,6 @@ namespace Emulator
                 }
             }
         }
-        
-
-        // Говно идея
-        // Лучше юзать метод ниже
-        // А потом удалять каждый отдельно без проверок и тд
-        void DeleteFIle(Obj file)
-        {
-            
-            try
-            {
-                DialogResult d_result;
-                if (!file.isFolder)
-                {
-                     d_result = MessageBox.Show($"Будет удален файл: {file.Name}, занимающий {file.GetSize} байт.",
-                        "Вы точно хотите удалить фалй?", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-                    if (d_result is DialogResult.No)
-                        return;
-                    s5fs.DeleteFileLinkFromDirectory(file.parent_inode, file.inode);
-                    return;
-                }
-                // Если папка - рекурсивно иду вглубину
-                // Для удаления вроде надо с конца удалять
-                var objs_to_delete = this.GetObjsInFolder(file).ToList();
-                objs_to_delete.Reverse();
-
-                var test = objs_to_delete.Sum(x => x.GetSize);
-
-                d_result = MessageBox.Show($"Будет удалено файлов: {objs_to_delete.Count}, занимающих {test} байт.",
-                    "Вы точно хотите удалить папку?", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-                if (d_result is DialogResult.No)
-                    return;
-                
-                foreach(var obj in objs_to_delete)
-                {
-                    s5fs.DeleteFileLinkFromDirectory(obj.parent_inode, obj.inode);
-                }
-
-                s5fs.DeleteFileLinkFromDirectory(file.parent_inode, file.inode);
-            }
-            catch (Exception exc)
-            {
-                MessageBox.Show(exc.Message);
-            }
-        }
-
         Obj[] GetObjsInFolder(Obj root_obj)
         {
             var root_data = s5fs.ReadDataByInode(root_obj.inode);
@@ -254,13 +212,10 @@ namespace Emulator
 
             foreach (var file in files)
             {
+                objs.Add(file);
                 if (file.isFolder)
                 {
                     objs.AddRange(this.GetObjsInFolder(file));
-                }
-                else
-                {
-                    objs.Add(file);
                 }
             }
 
@@ -333,6 +288,7 @@ namespace Emulator
 
         private void удалитьToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            var selected_objects = new List<Obj>();
             for (int i = 0; i < dataGridView1.SelectedRows.Count; i++)
             {
                 var index = (int)dataGridView1["FileID_Column", dataGridView1.SelectedRows[i].Index].Value;
@@ -341,15 +297,67 @@ namespace Emulator
                     throw new Exception("IDK What's going on");
                 var file = objects.First().Value;
 
-                try
-                {
-                    this.DeleteFIle(file);
-                }
-                catch(Exception exc)
-                {
-                    MessageBox.Show(exc.Message);
-                }
+                selected_objects.Add(file);
             }
+
+            var obj_to_delete = GetChildObjects(selected_objects.ToArray());
+
+            var size = obj_to_delete.Sum(x => x.GetSize);
+
+            var d_result = MessageBox.Show($"Будет удалено файлов: {obj_to_delete.Length}, занимающих {size} байт.",
+                    "Вы точно хотите удалить папку?", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+            if (d_result is DialogResult.No)
+            {
+                return;
+            }
+
+            obj_to_delete.Reverse();
+
+            foreach (var obj in obj_to_delete)
+            {
+                s5fs.DeleteFileLinkFromDirectory(obj.parent_inode, obj.inode);
+            }
+
+            var vs = this.UpdateFolder();
+            this.UpdateTable(vs);
+        }
+
+        private void вывестиРазмерФСToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            //var root_obj = this.path.Last();
+            new SystemInfo(this.s5fs).ShowDialog(this);
+        }
+
+        private void открытьToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (dataGridView1.SelectedRows.Count is not 1)
+                return;
+
+            this.dataGridView1_CellDoubleClick(sender,
+                new(0, dataGridView1.SelectedRows[0].Index));
+        }
+
+        private void переименоватьToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (dataGridView1.SelectedRows.Count is not 1)
+                return;
+
+            var selected_obj_id = dataGridView1.SelectedRows[0].Cells["FileID_Column"].Value;
+            var selected_obj = this.objs.Find(x => x.Key.Equals(selected_obj_id)).Value;
+
+            var names = this.GetFileNamesInCurr();
+            NameGetForm form = new(names);
+            var result = form.ShowDialog();
+            if (result is not DialogResult.OK)
+            {
+                return;
+            }
+
+            var new_name = form.Result;
+
+            s5fs.AddFileLinkToDirectory(selected_obj.parent_inode, selected_obj.inode, new_name);
+            s5fs.DeleteFileLinkFromDirectory(selected_obj.parent_inode, selected_obj.inode);
 
             var vs = this.UpdateFolder();
             this.UpdateTable(vs);
