@@ -12,6 +12,13 @@ namespace Emulator
         private List<KeyValuePair<int, Obj>> objs;
         S5FS.S5FS s5fs;
 
+        CopyCutState copyCutState = CopyCutState.None;
+
+        List<Obj> obj_to_copy = new();
+        Obj copy_from;
+
+        public enum CopyCutState { Copy, Cut, None };
+
         public MainForm()
         {
             InitializeComponent();
@@ -47,9 +54,7 @@ namespace Emulator
                 dataGridView1["FileModification_Column", i].Value = objects[i].ChangeDateTime;
                 dataGridView1["FileRead_Column", i].Value = objects[i].ReadDateTime;
                 dataGridView1["FileOwner_Column", i].Value = objects[i].UserID;
-                dataGridView1["FileUPerm_Column", i].Value = objects[i].OwnerPermissions;
-                dataGridView1["FileGPerm_Column", i].Value = objects[i].GroupPermissions;
-                dataGridView1["FileOPerm_Column", i].Value = objects[i].OtherPermissions;
+                dataGridView1["Permissions_Column", i].Value = "rwx rwx rwx";
                 dataGridView1["IsSystem_Column", i].Value = objects[i].IsSystem;
                 dataGridView1["IsReadOnly_Column", i].Value = objects[i].IsReadOnly;
                 dataGridView1["IsVisible_Column", i].Value = objects[i].IsVisible;
@@ -281,19 +286,12 @@ namespace Emulator
 
         private void Û‰‡ÎËÚ¸ToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var selected_objects = new List<Obj>();
-            for (int i = 0; i < dataGridView1.SelectedRows.Count; i++)
-            {
-                var index = (int)dataGridView1["FileID_Column", dataGridView1.SelectedRows[i].Index].Value;
-                var objects = this.objs.Where(x => x.Key == index);
-                if (objects.Count() is 0)
-                    throw new Exception("IDK What's going on");
-                var file = objects.First().Value;
+            if (dataGridView1.SelectedRows.Count is 0)
+                return;
 
-                selected_objects.Add(file);
-            }
+            var selected_objects = this.GetSelectedObjs();
 
-            var obj_to_delete = GetChildObjects(selected_objects.ToArray());
+            var obj_to_delete = GetChildObjects(selected_objects);
 
             var size = obj_to_delete.Sum(x => x.GetSize);
 
@@ -354,6 +352,118 @@ namespace Emulator
 
             var vs = this.UpdateFolder();
             this.UpdateTable(vs);
+        }
+
+        private Obj[] GetSelectedObjs()
+        {
+            var selected_objects = new List<Obj>();
+            for (int i = 0; i < dataGridView1.SelectedRows.Count; i++)
+            {
+                var index = (int)dataGridView1["FileID_Column", dataGridView1.SelectedRows[i].Index].Value;
+                var objects = this.objs.Where(x => x.Key == index);
+                if (objects.Count() is 0)
+                    throw new Exception("IDK What's going on");
+                var file = objects.First().Value;
+
+                selected_objects.Add(file);
+            }
+            return selected_objects.ToArray();
+        }
+
+        private void ÍÓÔËÓ‚‡Ú¸ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (dataGridView1.SelectedRows.Count is 0)
+                return;
+
+            copyCutState = CopyCutState.Copy;
+
+            this.comboBox1.Items.Clear();
+            obj_to_copy.Clear();
+
+            copy_from = this.path.Peek();
+
+            var to_copy = this.GetSelectedObjs();
+
+            foreach (var obj in to_copy)
+            {
+                this.comboBox1.Items.Add(obj.ToString());
+                obj_to_copy.Add(obj);
+            }
+        }
+
+        private void ‚˚ÂÁ‡Ú¸ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (dataGridView1.SelectedRows.Count is 0)
+                return;
+
+            copyCutState = CopyCutState.Cut;
+
+            this.comboBox1.Items.Clear();
+
+            copy_from = this.path.Peek();
+
+            var to_copy = this.GetSelectedObjs();
+
+            foreach (var obj in to_copy)
+            {
+                this.comboBox1.Items.Add(obj.ToString());
+                obj_to_copy.Add(obj);
+            }
+        }
+
+        private void ‚ÒÚ‡‚ËÚ¸ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (copyCutState is CopyCutState.None)
+                return;
+
+            if (comboBox1.Items.Count is 0)
+                return;
+
+            if (copy_from == path.Peek())
+                return;
+
+            if (copyCutState is CopyCutState.Copy)
+            {
+                var to_copy = this.GetChildObjects(obj_to_copy.ToArray());
+                
+                Stack<Inode> new_tree = new();
+                Stack<Inode> old_tree = new();
+                new_tree.Push(this.path.Peek().inode);
+                old_tree.Push(to_copy.First().parent_inode);
+
+                foreach (var obj in to_copy)
+                {
+                    while (!obj.parent_inode.Equals(old_tree.Peek())) 
+                    {
+                        old_tree.Pop();
+                        new_tree.Pop();
+                    }
+                    var vs1 = this.CopyElement(new_tree.Peek(), obj);
+                    if (obj.isFolder)
+                    {
+                        new_tree.Push(vs1);
+                        old_tree.Push(obj.inode);
+                    }   
+                }
+            }
+            else if (copyCutState is CopyCutState.Cut)
+            {
+
+            }
+
+            var vs = this.UpdateFolder();
+            this.UpdateTable(vs);
+        }
+
+        private Inode CopyElement(Inode parent, Obj to_copy)
+        {
+            var inode_info = s5fs.CreateFile(parent, to_copy.Name, to_copy.isFolder);
+            if (to_copy.isFolder is true)
+                return inode_info.daughter;
+            var data = s5fs.ReadDataByInode(to_copy.inode);
+            s5fs.WriteDataByInode(inode_info.daughter, data);
+
+            return inode_info.daughter;
         }
     }
 }

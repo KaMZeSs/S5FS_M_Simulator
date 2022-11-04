@@ -172,5 +172,10 @@ namespace Emulator
             this.inode = inode;
             this.parent_inode = parent_inode;
         }
+
+        public override string ToString()
+        {
+            return this.Name;
+        }
     }
 }

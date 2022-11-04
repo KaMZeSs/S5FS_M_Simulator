@@ -17,6 +17,13 @@ namespace S5FS
         public static IEnumerable<byte[]> Slicer(byte[] main_array, UInt32 block_size)
         {
             byte[] result;
+
+            if (main_array.Length is 0)
+            {
+                result = new byte[block_size];
+                yield return result;
+            }
+
             for (Int32 i = 0; ; i += (int)block_size)
             {
                 result = main_array.Skip(i).Take((int)block_size).ToArray();

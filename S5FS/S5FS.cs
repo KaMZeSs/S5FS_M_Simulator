@@ -321,6 +321,9 @@ namespace S5FS
                 bytes.AddRange(value);
             }
 
+            if (bytes.Count is 0)
+                return new byte[1];
+
             return bytes.ToArray();
         
         }

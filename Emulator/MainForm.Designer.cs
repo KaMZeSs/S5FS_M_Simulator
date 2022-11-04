@@ -31,6 +31,8 @@
             this.panel1 = new System.Windows.Forms.Panel();
             this.panel3 = new System.Windows.Forms.Panel();
             this.textBox1 = new System.Windows.Forms.TextBox();
+            this.panel4 = new System.Windows.Forms.Panel();
+            this.comboBox1 = new System.Windows.Forms.ComboBox();
             this.panel2 = new System.Windows.Forms.Panel();
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.файловаяСистемаToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -42,6 +44,9 @@
             this.удалитьToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.свойстваToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.открытьToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.копироватьToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.вырезатьToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.вставитьToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.пользовательToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.сменитьПользователяToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.удалитьПользователяToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -59,8 +64,10 @@
             this.IsSystem_Column = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.IsReadOnly_Column = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.IsVisible_Column = new System.Windows.Forms.DataGridViewCheckBoxColumn();
+            this.EmptyColumns = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.panel1.SuspendLayout();
             this.panel3.SuspendLayout();
+            this.panel4.SuspendLayout();
             this.menuStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             this.SuspendLayout();
@@ -78,6 +85,7 @@
             // panel3
             // 
             this.panel3.Controls.Add(this.textBox1);
+            this.panel3.Controls.Add(this.panel4);
             this.panel3.Dock = System.Windows.Forms.DockStyle.Fill;
             this.panel3.Location = new System.Drawing.Point(35, 0);
             this.panel3.Name = "panel3";
@@ -91,8 +99,29 @@
             this.textBox1.Location = new System.Drawing.Point(0, 0);
             this.textBox1.Name = "textBox1";
             this.textBox1.ReadOnly = true;
-            this.textBox1.Size = new System.Drawing.Size(765, 33);
-            this.textBox1.TabIndex = 0;
+            this.textBox1.Size = new System.Drawing.Size(547, 33);
+            this.textBox1.TabIndex = 2;
+            // 
+            // panel4
+            // 
+            this.panel4.Controls.Add(this.comboBox1);
+            this.panel4.Dock = System.Windows.Forms.DockStyle.Right;
+            this.panel4.Location = new System.Drawing.Point(547, 0);
+            this.panel4.Name = "panel4";
+            this.panel4.Size = new System.Drawing.Size(218, 34);
+            this.panel4.TabIndex = 1;
+            // 
+            // comboBox1
+            // 
+            this.comboBox1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.comboBox1.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
+            this.comboBox1.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboBox1.Font = new System.Drawing.Font("Segoe UI", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            this.comboBox1.FormattingEnabled = true;
+            this.comboBox1.Location = new System.Drawing.Point(0, 0);
+            this.comboBox1.Name = "comboBox1";
+            this.comboBox1.Size = new System.Drawing.Size(218, 34);
+            this.comboBox1.TabIndex = 0;
             // 
             // panel2
             // 
@@ -122,7 +151,10 @@
             this.переименоватьToolStripMenuItem,
             this.удалитьToolStripMenuItem,
             this.свойстваToolStripMenuItem,
-            this.открытьToolStripMenuItem});
+            this.открытьToolStripMenuItem,
+            this.копироватьToolStripMenuItem,
+            this.вырезатьToolStripMenuItem,
+            this.вставитьToolStripMenuItem});
             this.файловаяСистемаToolStripMenuItem.Name = "файловаяСистемаToolStripMenuItem";
             this.файловаяСистемаToolStripMenuItem.Size = new System.Drawing.Size(121, 20);
             this.файловаяСистемаToolStripMenuItem.Text = "Файловая система";
@@ -184,6 +216,27 @@
             this.открытьToolStripMenuItem.Text = "Открыть";
             this.открытьToolStripMenuItem.Click += new System.EventHandler(this.открытьToolStripMenuItem_Click);
             // 
+            // копироватьToolStripMenuItem
+            // 
+            this.копироватьToolStripMenuItem.Name = "копироватьToolStripMenuItem";
+            this.копироватьToolStripMenuItem.Size = new System.Drawing.Size(229, 22);
+            this.копироватьToolStripMenuItem.Text = "Копировать";
+            this.копироватьToolStripMenuItem.Click += new System.EventHandler(this.копироватьToolStripMenuItem_Click);
+            // 
+            // вырезатьToolStripMenuItem
+            // 
+            this.вырезатьToolStripMenuItem.Name = "вырезатьToolStripMenuItem";
+            this.вырезатьToolStripMenuItem.Size = new System.Drawing.Size(229, 22);
+            this.вырезатьToolStripMenuItem.Text = "Вырезать";
+            this.вырезатьToolStripMenuItem.Click += new System.EventHandler(this.вырезатьToolStripMenuItem_Click);
+            // 
+            // вставитьToolStripMenuItem
+            // 
+            this.вставитьToolStripMenuItem.Name = "вставитьToolStripMenuItem";
+            this.вставитьToolStripMenuItem.Size = new System.Drawing.Size(229, 22);
+            this.вставитьToolStripMenuItem.Text = "Вставить";
+            this.вставитьToolStripMenuItem.Click += new System.EventHandler(this.вставитьToolStripMenuItem_Click);
+            // 
             // пользовательToolStripMenuItem
             // 
             this.пользовательToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
@@ -231,7 +284,8 @@
             this.Permissions_Column,
             this.IsSystem_Column,
             this.IsReadOnly_Column,
-            this.IsVisible_Column});
+            this.IsVisible_Column,
+            this.EmptyColumns});
             this.dataGridView1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.dataGridView1.Location = new System.Drawing.Point(0, 58);
             this.dataGridView1.Name = "dataGridView1";
@@ -317,6 +371,13 @@
             this.IsVisible_Column.Name = "IsVisible_Column";
             this.IsVisible_Column.ReadOnly = true;
             // 
+            // EmptyColumns
+            // 
+            this.EmptyColumns.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
+            this.EmptyColumns.HeaderText = "";
+            this.EmptyColumns.Name = "EmptyColumns";
+            this.EmptyColumns.ReadOnly = true;
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
@@ -332,6 +393,7 @@
             this.panel1.ResumeLayout(false);
             this.panel3.ResumeLayout(false);
             this.panel3.PerformLayout();
+            this.panel4.ResumeLayout(false);
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).EndInit();
@@ -344,7 +406,6 @@
 
         private Panel panel1;
         private Panel panel3;
-        private TextBox textBox1;
         private Panel panel2;
         private MenuStrip menuStrip1;
         private ToolStripMenuItem файловаяСистемаToolStripMenuItem;
@@ -373,5 +434,12 @@
         private DataGridViewCheckBoxColumn IsSystem_Column;
         private DataGridViewCheckBoxColumn IsReadOnly_Column;
         private DataGridViewCheckBoxColumn IsVisible_Column;
+        private DataGridViewTextBoxColumn EmptyColumns;
+        private TextBox textBox1;
+        private Panel panel4;
+        private ComboBox comboBox1;
+        private ToolStripMenuItem копироватьToolStripMenuItem;
+        private ToolStripMenuItem вырезатьToolStripMenuItem;
+        private ToolStripMenuItem вставитьToolStripMenuItem;
     }
 }
