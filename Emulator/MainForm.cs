@@ -17,11 +17,14 @@ namespace Emulator
         List<Obj> obj_to_copy = new();
         Obj copy_from;
 
+        Point? click_position;
+
         public enum CopyCutState { Copy, Cut, Link, None };
 
         public MainForm()
         {
             InitializeComponent();
+            dataGridView1.ShowCellToolTips = false;
         }
 
         private void MainForm_Load(object sender, EventArgs e)
@@ -37,6 +40,16 @@ namespace Emulator
 
         private void UpdateTable(Obj[] objects)
         {
+            //Проверка на то, что открытая папка открыта по ссылке
+            var last_folder = path.Peek();
+            if (path.Count(x => x.inode.index == last_folder.inode.index) is not 1)
+            {
+                path.Pop();
+
+                while (!path.Pop().inode.index.Equals(last_folder.inode.index)) ;
+                path.Push(last_folder);
+            }
+
             textBox1.Text = StackObjToStr(this.path);
             dataGridView1.Rows.Clear();
             objs.Clear();
@@ -58,7 +71,9 @@ namespace Emulator
                 dataGridView1["IsSystem_Column", i].Value = objects[i].IsSystem;
                 dataGridView1["IsReadOnly_Column", i].Value = objects[i].IsReadOnly;
                 dataGridView1["IsVisible_Column", i].Value = objects[i].IsVisible;
-            }            
+            }
+
+            click_position = null;
         }
 
         private String StackObjToStr(Stack<Obj> path)
@@ -333,11 +348,27 @@ namespace Emulator
 
         private void переименоватьToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (dataGridView1.SelectedRows.Count is not 1)
+            if (dataGridView1.SelectedRows.Count is not 1) 
                 return;
 
-            var selected_obj_id = dataGridView1.SelectedRows[0].Cells["FileID_Column"].Value;
-            var selected_obj = this.objs.Find(x => x.Key.Equals(selected_obj_id)).Value;
+            object selected_obj_id;
+
+            if (click_position is not null)
+            {
+                var vs1 = dataGridView1.HitTest((int)click_position?.X, (int)click_position?.Y);
+
+                selected_obj_id = this.dataGridView1["FileID_Column", vs1.RowIndex].Value;
+            }
+            else if (dataGridView1.SelectedRows.Count is not 1)
+            {
+                return;
+            }
+            else
+            {
+                selected_obj_id = dataGridView1.SelectedRows[0].Cells["FileID_Column"].Value;
+            }
+
+            var selected_obj = this.objs.Find(x => x.Key.Equals(selected_obj_id)).Value;            
 
             var names = this.GetFileNamesInCurr();
             NameGetForm form = new(names);
@@ -418,6 +449,7 @@ namespace Emulator
                 return;
 
             copyCutState = CopyCutState.Link;
+            obj_to_copy.Clear();
 
             copy_from = this.path.Peek();
 
@@ -520,6 +552,55 @@ namespace Emulator
             s5fs.WriteDataByInode(inode_info.daughter, data);
 
             return inode_info.daughter;
+        }
+
+        private void dataGridView1_MouseClick(object sender, MouseEventArgs e)
+        {
+            if (e.Button is not MouseButtons.Right)
+                return;
+
+            var test = dataGridView1.HitTest(e.X, e.Y);
+
+            if (test.RowIndex is -1)
+            {
+                if (copyCutState is CopyCutState.None)
+                {
+                    System_ContextMenu.Items["вставитьToolStripMenuItem1"].Enabled = false;
+                }
+                else
+                {
+                    System_ContextMenu.Items["вставитьToolStripMenuItem1"].Enabled = true;
+                }
+                System_ContextMenu.Show(Cursor.Position.X, Cursor.Position.Y);
+            }
+            else
+            {
+                if (!dataGridView1[test.ColumnIndex, test.RowIndex].Selected)
+                {
+                    dataGridView1.ClearSelection();
+                    dataGridView1[test.ColumnIndex, test.RowIndex].Selected = true;
+                }
+
+                if (dataGridView1.SelectedRows.Count is not 1)
+                {
+                    File_ContextMenu.Items["открытьToolStripMenuItem1"].Enabled = false;
+                    File_ContextMenu.Items["переименоватьToolStripMenuItem1"].Enabled = false;
+                }
+                else
+                {
+                    File_ContextMenu.Items["открытьToolStripMenuItem1"].Enabled = true;
+                    File_ContextMenu.Items["переименоватьToolStripMenuItem1"].Enabled = true;
+                }
+
+                File_ContextMenu.Show(Cursor.Position.X, Cursor.Position.Y);
+            }
+        }
+
+        private void очиститьБуферОбменаToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            obj_to_copy.Clear();
+            copied_label.Text = "Нет скопированных элементов";
+            copyCutState = CopyCutState.None;
         }
     }
 }
