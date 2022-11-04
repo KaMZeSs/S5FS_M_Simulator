@@ -37,14 +37,14 @@ namespace Emulator
                 MessageBox.Show("Имя не может быть пустым");
                 return;
             }
-            if (text.Length > 30)
-            {
-                MessageBox.Show("Имя не может быть больше 30 символов");
-                return;
-            }
             if (exist.Contains(text))
             {
                 MessageBox.Show("Имя уже существует");
+                return;
+            }
+            if (Encoding.UTF8.GetByteCount(text.ToArray()) > 60)
+            {
+                MessageBox.Show("Имя слишком большое");
                 return;
             }
             Result = text;

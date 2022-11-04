@@ -13,16 +13,12 @@ namespace Emulator
     public partial class TextViewer : Form
     {
         public String TextView { get; private set; }
-        private int max_size;
         bool isChanged;
 
-        public TextViewer(String text, int max_size)
+        public TextViewer(String text)
         {
             InitializeComponent();
-            richTextBox1.MaxLength = max_size;
             richTextBox1.Text = text;
-            
-            this.max_size = max_size;
 
             isChanged = false;
         }

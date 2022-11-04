@@ -55,9 +55,7 @@
             this.FileModification_Column = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.FileRead_Column = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.FileOwner_Column = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.FileUPerm_Column = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.FileGPerm_Column = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.FileOPerm_Column = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Permissions_Column = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.IsSystem_Column = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.IsReadOnly_Column = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.IsVisible_Column = new System.Windows.Forms.DataGridViewCheckBoxColumn();
@@ -230,9 +228,7 @@
             this.FileModification_Column,
             this.FileRead_Column,
             this.FileOwner_Column,
-            this.FileUPerm_Column,
-            this.FileGPerm_Column,
-            this.FileOPerm_Column,
+            this.Permissions_Column,
             this.IsSystem_Column,
             this.IsReadOnly_Column,
             this.IsVisible_Column});
@@ -294,23 +290,11 @@
             this.FileOwner_Column.Name = "FileOwner_Column";
             this.FileOwner_Column.ReadOnly = true;
             // 
-            // FileUPerm_Column
+            // Permissions_Column
             // 
-            this.FileUPerm_Column.HeaderText = "Разрешения владельца";
-            this.FileUPerm_Column.Name = "FileUPerm_Column";
-            this.FileUPerm_Column.ReadOnly = true;
-            // 
-            // FileGPerm_Column
-            // 
-            this.FileGPerm_Column.HeaderText = "Разрешения группы";
-            this.FileGPerm_Column.Name = "FileGPerm_Column";
-            this.FileGPerm_Column.ReadOnly = true;
-            // 
-            // FileOPerm_Column
-            // 
-            this.FileOPerm_Column.HeaderText = "Разрешения остальнох";
-            this.FileOPerm_Column.Name = "FileOPerm_Column";
-            this.FileOPerm_Column.ReadOnly = true;
+            this.Permissions_Column.HeaderText = "Разрешения";
+            this.Permissions_Column.Name = "Permissions_Column";
+            this.Permissions_Column.ReadOnly = true;
             // 
             // IsSystem_Column
             // 
@@ -385,9 +369,7 @@
         private DataGridViewTextBoxColumn FileModification_Column;
         private DataGridViewTextBoxColumn FileRead_Column;
         private DataGridViewTextBoxColumn FileOwner_Column;
-        private DataGridViewTextBoxColumn FileUPerm_Column;
-        private DataGridViewTextBoxColumn FileGPerm_Column;
-        private DataGridViewTextBoxColumn FileOPerm_Column;
+        private DataGridViewTextBoxColumn Permissions_Column;
         private DataGridViewCheckBoxColumn IsSystem_Column;
         private DataGridViewCheckBoxColumn IsReadOnly_Column;
         private DataGridViewCheckBoxColumn IsVisible_Column;

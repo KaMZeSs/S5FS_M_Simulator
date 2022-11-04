@@ -159,11 +159,11 @@ namespace Emulator
 
         public static byte[] StringToByteArr(String str)
         {
-            return Encoding.Unicode.GetBytes(str);
+            return Encoding.UTF8.GetBytes(str);
         }
         public static String ByteArrToString(byte[] arr)
         {
-            return Encoding.Unicode.GetString(arr);
+            return Encoding.UTF8.GetString(arr);
         }
 
         public Obj(string name, Inode inode, Inode parent_inode)

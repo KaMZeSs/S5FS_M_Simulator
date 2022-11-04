@@ -127,18 +127,6 @@ namespace Emulator
             return file_objs.ToArray();
         }
 
-        String GetTextFromFile(Obj file)
-        {
-            if (file.isFolder)
-            {
-                throw new Exception($"{file.Name} - не текстовый файл");
-            }
-
-            var data = s5fs.ReadDataByInode(file.inode);
-            var text = Obj.ByteArrToString(data);
-            return text;
-        }
-
         void CreateFile(String name, bool isFolder = false)
         {
             try
@@ -163,7 +151,7 @@ namespace Emulator
 
             var max_text_size = (int)(s5fs.max_file_size / 2);
 
-            TextViewer textViewer = new(text, max_text_size);
+            TextViewer textViewer = new(text);
 
             while (true)
             {
@@ -172,7 +160,12 @@ namespace Emulator
                 {
                     try
                     {
-                        s5fs.WriteDataByInode(file.inode, Obj.StringToByteArr(textViewer.TextView));
+                        var arr = Obj.StringToByteArr(textViewer.TextView);
+                        if (arr.Length >= s5fs.max_file_size)
+                        {
+                            throw new Exception("");
+                        }
+                        s5fs.WriteDataByInode(file.inode, arr);
                         break;
                     }
                     catch (Exception)

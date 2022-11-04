@@ -293,7 +293,7 @@ namespace S5FS
             {
                 var id = BitConverter.ToUInt32(splitted.Current, 0);
                 
-                var name = Encoding.Unicode.GetString(splitted.Current, 4, 64 - 4);
+                var name = Encoding.UTF8.GetString(splitted.Current, 4, 64 - 4).Trim('\0');
                 files.Add(new(id, name));
             }
             var existing_files = from file in files where file.Key != 0 select file; // онли существующие
@@ -313,14 +313,16 @@ namespace S5FS
             {
                 var id = BitConverter.GetBytes(files[i].Key);
 
-                var str = Helper.StringExtender(files[i].Value, 30);
+                var value = Encoding.UTF8.GetBytes(files[i].Value.Trim());
 
-                var value = Encoding.Unicode.GetBytes(str);
+                Array.Resize<byte>(ref value, 60);
+
                 bytes.AddRange(id);
                 bytes.AddRange(value);
             }
 
             return bytes.ToArray();
+        
         }
 
         /// <summary>
@@ -696,7 +698,6 @@ namespace S5FS
 
         public InodeInfo CreateFile(Inode root, String name, bool isFolder = false)
         {
-            name = Helper.StringExtender(name, 30);
             var root_data = this.ReadDataByInode(root);
             var files_in_root = this.GetFilesFromFolderData(root_data);
 
@@ -779,14 +780,12 @@ namespace S5FS
             {
                 inode = this.GetInodeByPath(path.Split("\\"));
             }
-
-            var str = Helper.StringExtender(name, 30);
                 
             var inode_bytes = this.ReadDataByInode(inode);
             var files_in_last_inode = GetFilesFromFolderData(inode_bytes);
 
             var check = from fold in files_in_last_inode
-                        where fold.Value == str
+                        where fold.Value == name
                         select fold;
             if (check.Count() is 0)
             {
@@ -834,13 +833,11 @@ namespace S5FS
 
         public InodeInfo OpenFile(Inode parent, String name)
         {
-            var str = Helper.StringExtender(name, 30);
-
             var inode_bytes = this.ReadDataByInode(parent);
             var files_in_last_inode = GetFilesFromFolderData(inode_bytes);
 
             var check = from fold in files_in_last_inode
-                        where fold.Value == str
+                        where fold.Value == name
                         select fold;
             if (check.Count() is 0)
             {
