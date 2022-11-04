@@ -142,6 +142,14 @@ namespace Emulator
             }
         }
 
+        public int NLinks 
+        { 
+            get 
+            {
+                return inode.di_nlinks;
+            }
+        }
+
         ///// <summary>
         ///// Массив байт содержимого файла.
         ///// </summary>

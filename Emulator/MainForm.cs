@@ -17,7 +17,7 @@ namespace Emulator
         List<Obj> obj_to_copy = new();
         Obj copy_from;
 
-        public enum CopyCutState { Copy, Cut, None };
+        public enum CopyCutState { Copy, Cut, Link, None };
 
         public MainForm()
         {
@@ -293,9 +293,11 @@ namespace Emulator
 
             var obj_to_delete = GetChildObjects(selected_objects);
 
-            var size = obj_to_delete.Sum(x => x.GetSize);
+            var size = obj_to_delete.Where(x => x.NLinks is 1).Sum(x => x.GetSize);
+            var links = obj_to_delete.Where(x => x.NLinks is not 1).Count();
 
-            var d_result = MessageBox.Show($"Будет удалено файлов: {obj_to_delete.Length}, занимающих {size} байт.",
+            var d_result = MessageBox.Show($"Будет удалено файлов: {obj_to_delete.Length}, занимающих {size} байт." +
+                $"{(links is 0 ? String.Empty : $"Будет удалено ссылок: {links}")}",
                     "Вы точно хотите удалить папку?", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
             if (d_result is DialogResult.No)
@@ -377,7 +379,6 @@ namespace Emulator
 
             copyCutState = CopyCutState.Copy;
 
-            this.comboBox1.Items.Clear();
             obj_to_copy.Clear();
 
             copy_from = this.path.Peek();
@@ -386,9 +387,10 @@ namespace Emulator
 
             foreach (var obj in to_copy)
             {
-                this.comboBox1.Items.Add(obj.ToString());
                 obj_to_copy.Add(obj);
             }
+
+            copied_label.Text = $"Скопировано элементов: {obj_to_copy.Count}";
         }
 
         private void вырезатьToolStripMenuItem_Click(object sender, EventArgs e)
@@ -398,7 +400,24 @@ namespace Emulator
 
             copyCutState = CopyCutState.Cut;
 
-            this.comboBox1.Items.Clear();
+            copy_from = this.path.Peek();
+
+            var to_copy = this.GetSelectedObjs();
+
+            foreach (var obj in to_copy)
+            {
+                obj_to_copy.Add(obj);
+            }
+
+            copied_label.Text = $"Вырезано элементов: {obj_to_copy.Count}";
+        }
+
+        private void создатьСсылкуToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (dataGridView1.SelectedRows.Count is 0)
+                return;
+
+            copyCutState = CopyCutState.Link;
 
             copy_from = this.path.Peek();
 
@@ -406,9 +425,10 @@ namespace Emulator
 
             foreach (var obj in to_copy)
             {
-                this.comboBox1.Items.Add(obj.ToString());
                 obj_to_copy.Add(obj);
             }
+
+            copied_label.Text = $"Элементов для ссылки: {obj_to_copy.Count}";
         }
 
         private void вставитьToolStripMenuItem_Click(object sender, EventArgs e)
@@ -416,11 +436,17 @@ namespace Emulator
             if (copyCutState is CopyCutState.None)
                 return;
 
-            if (comboBox1.Items.Count is 0)
+            if (obj_to_copy.Count is 0)
                 return;
 
             if (copy_from == path.Peek())
+            {
+                MessageBox.Show("Корневая папка, в которую " +
+                            "следует поместить файлы, является дочерней " +
+                            "для папки, в которой они находятся.");
                 return;
+            }
+                
 
             if (copyCutState is CopyCutState.Copy)
             {
@@ -448,7 +474,37 @@ namespace Emulator
             }
             else if (copyCutState is CopyCutState.Cut)
             {
+                foreach (var obj in obj_to_copy)
+                {
+                    if (this.path.Any(x => x.inode.Equals(obj.inode)))
+                    {
+                        MessageBox.Show("Корневая папка, в которую " +
+                            "следует поместить файлы, является дочерней " +
+                            "для папки, в которой они находятся.");
+                        return;
+                    }
+                }
+                
+                foreach (var obj in obj_to_copy)
+                {
+                    s5fs.AddFileLinkToDirectory(this.path.Peek().inode, obj.inode, obj.Name);
+                    s5fs.DeleteFileLinkFromDirectory(obj.parent_inode, obj.inode);
+                }
+            }
+            else if (copyCutState is CopyCutState.Link)
+            {
+                foreach (var obj in obj_to_copy)
+                {
+                    if (this.path.Any(x => x.inode.Equals(obj.inode)))
+                    {
+                        MessageBox.Show("Корневая папка, в которую " +
+                            "следует поместить ссылку, является дочерней " +
+                            "для папки, в которой они находятся.");
+                        return;
+                    }
 
+                    s5fs.AddFileLinkToDirectory(this.path.Peek().inode, obj.inode, obj.Name);
+                }
             }
 
             var vs = this.UpdateFolder();
