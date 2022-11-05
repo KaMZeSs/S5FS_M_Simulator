@@ -12,7 +12,7 @@ namespace Emulator
     /// Класс объекта файловой системы.
     /// Все файлы и папки - объекты и имеют те же атрибуты.
     /// </summary>
-    internal class Obj
+    public class Obj
     {
         /// <summary>
         /// Является ли файл папкой
@@ -98,25 +98,25 @@ namespace Emulator
             }
         }
 
-        public byte OwnerPermissions
+        public Permissions OwnerPermissions
         {
             get
             {
-                return 0;
+                return new (attr.OwnerPerm);
             }
         }
-        public byte GroupPermissions
+        public Permissions GroupPermissions
         {
             get
             {
-                return 0;
+                return new(attr.GroupPerm);
             }
         }
-        public byte OtherPermissions
+        public Permissions OtherPermissions
         {
             get
             {
-                return 0;
+                return new(attr.OtherPerm);
             }
         }
 
@@ -124,21 +124,21 @@ namespace Emulator
         {
             get
             {
-                return false;
+                return (attr.Flags is 7) || (attr.Flags is 6) || (attr.Flags is 5) || (attr.Flags is 4);
             }
         }
-        public bool IsVisible
+        public bool IsHidden
         {
             get
             {
-                return true;
+                return (attr.Flags is 7) || (attr.Flags is 5) || (attr.Flags is 3) || (attr.Flags is 1);
             }
         }
         public bool IsReadOnly
         {
             get
             {
-                return false;
+                return (attr.Flags is 7) || (attr.Flags is 6) || (attr.Flags is 3) || (attr.Flags is 2);
             }
         }
 
@@ -165,6 +165,8 @@ namespace Emulator
         /// </summary>
         public S5FS.Inode parent_inode;
 
+        public S5FS.Inode.Attributes attr;
+
         public static byte[] StringToByteArr(String str)
         {
             return Encoding.UTF8.GetBytes(str);
@@ -179,11 +181,79 @@ namespace Emulator
             Name = name.Trim();
             this.inode = inode;
             this.parent_inode = parent_inode;
+            this.attr = S5FS.Inode.Attributes.UInt16ToAttributes(this.inode.di_mode);
         }
 
         public override string ToString()
         {
             return this.Name;
+        }
+
+        public static String PermToString(byte perm) => perm switch
+        {
+            0 => "---",
+            1 => "--x",
+            2 => "-w-",
+            3 => "-wx",
+            4 => "r--",
+            5 => "r-x",
+            6 => "rw-",
+            7 => "rwx",
+            _ => throw new ArgumentOutOfRangeException(),
+        };
+
+        public class Permissions
+        {
+            public byte Data { get { return data; } }
+            private byte data;
+
+            public bool CanRead
+            {
+                get
+                {
+                    return data switch
+                    {
+                        4 => true,
+                        5 => true,
+                        6 => true,
+                        7 => true,
+                        _ => false,
+                    };
+                }
+            }
+            public bool CanWrite
+            {
+                get
+                {
+                    return data switch
+                    {
+                        2 => true,
+                        3 => true,
+                        6 => true,
+                        7 => true,
+                        _ => false,
+                    };
+                }
+            }
+            public bool CanExecute
+            {
+                get
+                {
+                    return data switch
+                    {
+                        1 => true,
+                        3 => true,
+                        5 => true,
+                        7 => true,
+                        _ => false,
+                    };
+                }
+            }
+
+            public Permissions(byte num)
+            {
+                data = num;
+            }
         }
     }
 }

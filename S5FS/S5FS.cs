@@ -45,6 +45,9 @@ namespace S5FS
             }
         }
 
+        private static UInt16 DefaultFolder = 0b01_111_101_100_000_00;
+        private static UInt16 DefaultFile = 0b10_111_101_100_000_00;
+
 
         public UInt32 max_file_size { get; private set; }
 
@@ -729,7 +732,7 @@ namespace S5FS
             //Если дошли сюда, значит есть свободные блоки/инод
             long time = DateTime.Now.Ticks;
 
-            ushort di_mode = (ushort)(isFolder ? 0b01_111_101_100_00000 : 0b10_111_101_100_00000); // Надо бы еще и пользователей/группы прикрутить
+            ushort di_mode = (ushort)(isFolder ? DefaultFolder : DefaultFile);
 
             var inode = new Inode(inode_num)
             {

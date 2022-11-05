@@ -65,7 +65,7 @@
             this.FileOwner_Column = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.IsSystem_Column = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.IsReadOnly_Column = new System.Windows.Forms.DataGridViewCheckBoxColumn();
-            this.IsVisible_Column = new System.Windows.Forms.DataGridViewCheckBoxColumn();
+            this.IsHidden_Column = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.EmptyColumns = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.File_ContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.открытьToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
@@ -74,6 +74,7 @@
             this.копироватьToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.вырезатьToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.создатьСсылкуToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
+            this.свойстваToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.System_ContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.вставитьToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.создатьToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
@@ -227,6 +228,7 @@
             this.свойстваToolStripMenuItem.Name = "свойстваToolStripMenuItem";
             this.свойстваToolStripMenuItem.Size = new System.Drawing.Size(229, 22);
             this.свойстваToolStripMenuItem.Text = "Свойства";
+            this.свойстваToolStripMenuItem.Click += new System.EventHandler(this.свойстваToolStripMenuItem1_Click);
             // 
             // открытьToolStripMenuItem
             // 
@@ -310,7 +312,7 @@
             this.FileOwner_Column,
             this.IsSystem_Column,
             this.IsReadOnly_Column,
-            this.IsVisible_Column,
+            this.IsHidden_Column,
             this.EmptyColumns});
             this.dataGridView1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.dataGridView1.Location = new System.Drawing.Point(0, 58);
@@ -393,12 +395,12 @@
             this.IsReadOnly_Column.ReadOnly = true;
             this.IsReadOnly_Column.Visible = false;
             // 
-            // IsVisible_Column
+            // IsHidden_Column
             // 
-            this.IsVisible_Column.HeaderText = "Видимый";
-            this.IsVisible_Column.Name = "IsVisible_Column";
-            this.IsVisible_Column.ReadOnly = true;
-            this.IsVisible_Column.Visible = false;
+            this.IsHidden_Column.HeaderText = "Скрытый";
+            this.IsHidden_Column.Name = "IsHidden_Column";
+            this.IsHidden_Column.ReadOnly = true;
+            this.IsHidden_Column.Visible = false;
             // 
             // EmptyColumns
             // 
@@ -415,9 +417,10 @@
             this.удалитьToolStripMenuItem1,
             this.копироватьToolStripMenuItem1,
             this.вырезатьToolStripMenuItem1,
-            this.создатьСсылкуToolStripMenuItem1});
+            this.создатьСсылкуToolStripMenuItem1,
+            this.свойстваToolStripMenuItem1});
             this.File_ContextMenu.Name = "File_ContextMenu";
-            this.File_ContextMenu.Size = new System.Drawing.Size(162, 136);
+            this.File_ContextMenu.Size = new System.Drawing.Size(162, 158);
             // 
             // открытьToolStripMenuItem1
             // 
@@ -461,6 +464,13 @@
             this.создатьСсылкуToolStripMenuItem1.Text = "Создать ссылку";
             this.создатьСсылкуToolStripMenuItem1.Click += new System.EventHandler(this.создатьСсылкуToolStripMenuItem_Click);
             // 
+            // свойстваToolStripMenuItem1
+            // 
+            this.свойстваToolStripMenuItem1.Name = "свойстваToolStripMenuItem1";
+            this.свойстваToolStripMenuItem1.Size = new System.Drawing.Size(161, 22);
+            this.свойстваToolStripMenuItem1.Text = "Свойства";
+            this.свойстваToolStripMenuItem1.Click += new System.EventHandler(this.свойстваToolStripMenuItem1_Click);
+            // 
             // System_ContextMenu
             // 
             this.System_ContextMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
@@ -490,14 +500,14 @@
             // файлToolStripMenuItem1
             // 
             this.файлToolStripMenuItem1.Name = "файлToolStripMenuItem1";
-            this.файлToolStripMenuItem1.Size = new System.Drawing.Size(108, 22);
+            this.файлToolStripMenuItem1.Size = new System.Drawing.Size(180, 22);
             this.файлToolStripMenuItem1.Text = "Файл";
             this.файлToolStripMenuItem1.Click += new System.EventHandler(this.CreateFileToolStripMenuItem_Click);
             // 
             // папкуToolStripMenuItem1
             // 
             this.папкуToolStripMenuItem1.Name = "папкуToolStripMenuItem1";
-            this.папкуToolStripMenuItem1.Size = new System.Drawing.Size(108, 22);
+            this.папкуToolStripMenuItem1.Size = new System.Drawing.Size(180, 22);
             this.папкуToolStripMenuItem1.Text = "Папку";
             this.папкуToolStripMenuItem1.Click += new System.EventHandler(this.CreateFileToolStripMenuItem_Click);
             // 
@@ -567,19 +577,6 @@
         private ToolStripMenuItem вырезатьToolStripMenuItem;
         private ToolStripMenuItem вставитьToolStripMenuItem;
         private Label copied_label;
-        private DataGridViewTextBoxColumn FileID_Column;
-        private DataGridViewTextBoxColumn FileName_Column;
-        private DataGridViewTextBoxColumn FileType_Column;
-        private DataGridViewTextBoxColumn FileSize_Column;
-        private DataGridViewTextBoxColumn Permissions_Column;
-        private DataGridViewTextBoxColumn FileCreation_Column;
-        private DataGridViewTextBoxColumn FileModification_Column;
-        private DataGridViewTextBoxColumn FileRead_Column;
-        private DataGridViewTextBoxColumn FileOwner_Column;
-        private DataGridViewCheckBoxColumn IsSystem_Column;
-        private DataGridViewCheckBoxColumn IsReadOnly_Column;
-        private DataGridViewCheckBoxColumn IsVisible_Column;
-        private DataGridViewTextBoxColumn EmptyColumns;
         private ToolStripMenuItem создатьСсылкуToolStripMenuItem;
         private ContextMenuStrip File_ContextMenu;
         private ToolStripMenuItem открытьToolStripMenuItem1;
@@ -595,5 +592,19 @@
         private ToolStripMenuItem папкуToolStripMenuItem1;
         private ToolStripMenuItem вывестиИнформациюОФСToolStripMenuItem;
         private ToolStripMenuItem очиститьБуферОбменаToolStripMenuItem;
+        private DataGridViewTextBoxColumn FileID_Column;
+        private DataGridViewTextBoxColumn FileName_Column;
+        private DataGridViewTextBoxColumn FileType_Column;
+        private DataGridViewTextBoxColumn FileSize_Column;
+        private DataGridViewTextBoxColumn Permissions_Column;
+        private DataGridViewTextBoxColumn FileCreation_Column;
+        private DataGridViewTextBoxColumn FileModification_Column;
+        private DataGridViewTextBoxColumn FileRead_Column;
+        private DataGridViewTextBoxColumn FileOwner_Column;
+        private DataGridViewCheckBoxColumn IsSystem_Column;
+        private DataGridViewCheckBoxColumn IsReadOnly_Column;
+        private DataGridViewCheckBoxColumn IsHidden_Column;
+        private DataGridViewTextBoxColumn EmptyColumns;
+        private ToolStripMenuItem свойстваToolStripMenuItem1;
     }
 }

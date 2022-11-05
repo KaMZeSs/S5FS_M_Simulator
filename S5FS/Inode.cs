@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Data;
 using System.Linq;
 using System.Text;
@@ -149,6 +150,72 @@ namespace S5FS
                 return InodeTypeEnum.File;
             }
             return InodeTypeEnum.Empty;
+        }
+
+        public class Attributes
+        {
+            public byte OwnerPerm;
+            public byte GroupPerm;
+            public byte OtherPerm;
+            public byte Flags;
+
+            private readonly static BitVector32.Section r_sect = BitVector32.CreateSection(3);
+            private readonly static BitVector32.Section f_sect = BitVector32.CreateSection(7, r_sect);
+            private readonly static BitVector32.Section o_sect = BitVector32.CreateSection(7, f_sect);
+            private readonly static BitVector32.Section g_sect = BitVector32.CreateSection(7, o_sect);
+            private readonly static BitVector32.Section u_sect = BitVector32.CreateSection(7, g_sect);
+            private readonly static BitVector32.Section t_sect = BitVector32.CreateSection(3, u_sect);
+
+            private Attributes() { }
+
+            public static Attributes ChangeAttributes(Attributes attributes, byte OwnerPerm = 8, 
+                byte GroupPerm = 8, byte OtherPerm = 8, byte Flags = 8)
+            {
+                if (OwnerPerm < 8)
+                {
+                    attributes.OwnerPerm = OwnerPerm;
+                }
+                if (GroupPerm < 8)
+                {
+                    attributes.GroupPerm = GroupPerm;
+                }
+                if (OtherPerm < 8)
+                {
+                    attributes.OtherPerm = OtherPerm;
+                }
+                if (Flags < 8)
+                {
+                    attributes.Flags = Flags;
+                }
+
+                return attributes;
+            }
+
+            public static Attributes UInt16ToAttributes(UInt16 val)
+            {
+                var vect = new BitVector32(val);
+                return new Attributes()
+                {
+                    Flags = (byte)vect[Attributes.f_sect],
+                    OtherPerm = (byte)vect[Attributes.o_sect],
+                    GroupPerm = (byte)vect[Attributes.g_sect],
+                    OwnerPerm = (byte)vect[Attributes.u_sect],
+                };
+            }
+
+            public static UInt16 AttributesToUInt16(Attributes attr, InodeTypeEnum type)
+            {
+                var vect = new BitVector32(0);
+
+                vect[Attributes.f_sect] = attr.Flags;
+                vect[Attributes.o_sect] = attr.OtherPerm;
+                vect[Attributes.g_sect] = attr.GroupPerm;
+                vect[Attributes.u_sect] = attr.OwnerPerm;
+                var a = (int)type;
+                vect[Attributes.t_sect] = a;
+
+                return (UInt16)vect.Data;
+            }
         }
     }
 }

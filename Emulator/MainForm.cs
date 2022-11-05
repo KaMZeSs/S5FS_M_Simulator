@@ -19,6 +19,11 @@ namespace Emulator
 
         Point? click_position;
 
+        String curr_user = "";
+        int curr_user_id = 0;
+        bool isRoot = true;
+
+
         public enum CopyCutState { Copy, Cut, Link, None };
 
         public MainForm()
@@ -56,6 +61,15 @@ namespace Emulator
 
             for (int i = 0; i < objects.Length; i++)
             {
+                if (!isRoot)
+                {
+                    if (objects[i].UserID != curr_user_id && objects[i].IsHidden)
+                    {
+                        continue;
+                    }
+                }
+                
+
                 dataGridView1.Rows.Add();
                 objs.Add(new KeyValuePair<int, Obj>(i, objects[i]));
 
@@ -67,10 +81,14 @@ namespace Emulator
                 dataGridView1["FileModification_Column", i].Value = objects[i].ChangeDateTime;
                 dataGridView1["FileRead_Column", i].Value = objects[i].ReadDateTime;
                 dataGridView1["FileOwner_Column", i].Value = objects[i].UserID;
-                dataGridView1["Permissions_Column", i].Value = "rwx rwx rwx";
+                dataGridView1["Permissions_Column", i].Value = String.Join(' ',
+                    Obj.PermToString(objects[i].OwnerPermissions.Data),
+                    Obj.PermToString(objects[i].GroupPermissions.Data),
+                    Obj.PermToString(objects[i].OtherPermissions.Data));
+
                 dataGridView1["IsSystem_Column", i].Value = objects[i].IsSystem;
                 dataGridView1["IsReadOnly_Column", i].Value = objects[i].IsReadOnly;
-                dataGridView1["IsVisible_Column", i].Value = objects[i].IsVisible;
+                dataGridView1["IsHidden_Column", i].Value = objects[i].IsHidden;
             }
 
             click_position = null;
@@ -256,7 +274,7 @@ namespace Emulator
                 return;
             }
 
-            var isFolder = (sender as ToolStripMenuItem) != ôàéëToolStripMenuItem;
+            var isFolder = (sender as ToolStripMenuItem) != ôàéëToolStripMenuItem && (sender as ToolStripMenuItem) != ôàéëToolStripMenuItem1;
 
             this.CreateFile(form.Result, isFolder);
 
@@ -282,10 +300,8 @@ namespace Emulator
             else
             {
                 this.OpenFile(file);
-                var vs = this.UpdateFolder();
-                this.UpdateTable(vs);
+                this.UpdateTable(this.UpdateFolder());
             }
-
         }
 
         private void panel2_Click(object sender, EventArgs e)
@@ -585,11 +601,13 @@ namespace Emulator
                 {
                     File_ContextMenu.Items["îòêðûòüToolStripMenuItem1"].Enabled = false;
                     File_ContextMenu.Items["ïåðåèìåíîâàòüToolStripMenuItem1"].Enabled = false;
+                    File_ContextMenu.Items["ñâîéñòâàToolStripMenuItem1"].Enabled = false;
                 }
                 else
                 {
                     File_ContextMenu.Items["îòêðûòüToolStripMenuItem1"].Enabled = true;
                     File_ContextMenu.Items["ïåðåèìåíîâàòüToolStripMenuItem1"].Enabled = true;
+                    File_ContextMenu.Items["ñâîéñòâàToolStripMenuItem1"].Enabled = true;
                 }
 
                 File_ContextMenu.Show(Cursor.Position.X, Cursor.Position.Y);
@@ -601,6 +619,45 @@ namespace Emulator
             obj_to_copy.Clear();
             copied_label.Text = "Íåò ñêîïèðîâàííûõ ýëåìåíòîâ";
             copyCutState = CopyCutState.None;
+        }
+
+        private void ñâîéñòâàToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            if (dataGridView1.SelectedRows.Count is not 1)
+                return;
+
+            object selected_obj_id;
+
+            if (click_position is not null)
+            {
+                var vs1 = dataGridView1.HitTest((int)click_position?.X, (int)click_position?.Y);
+
+                selected_obj_id = this.dataGridView1["FileID_Column", vs1.RowIndex].Value;
+            }
+            else if (dataGridView1.SelectedRows.Count is not 1)
+            {
+                return;
+            }
+            else
+            {
+                selected_obj_id = dataGridView1.SelectedRows[0].Cells["FileID_Column"].Value;
+            }
+
+            var selected_obj = this.objs.Find(x => x.Key.Equals(selected_obj_id)).Value;
+
+            var form = new Properties(selected_obj, 
+                new KeyValuePair<int, string>[] { new KeyValuePair<int, string>(0, "root") });
+            var d_result = form.ShowDialog();
+            if (d_result is not DialogResult.OK)
+            {
+                return;
+            }
+
+            var obj = form.obj;
+
+            s5fs.WriteInode(obj.inode);
+
+            this.UpdateTable(this.UpdateFolder());
         }
     }
 }
