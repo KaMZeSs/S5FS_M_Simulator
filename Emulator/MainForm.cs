@@ -19,8 +19,8 @@ namespace Emulator
 
         Point? click_position;
 
-        String curr_user = "";
-        int curr_user_id = 0;
+        ushort curr_user_id = 0;
+        ushort curr_group_id = 0;
         bool isRoot = true;
 
 
@@ -122,6 +122,7 @@ namespace Emulator
             {
                 throw new Exception($"{folder.Name} - не папка");
             }
+
             var root_inode = folder.inode;
             var root_data = s5fs.ReadDataByInode(root_inode);
             var files = s5fs.GetFilesFromFolderData(root_data);
@@ -167,9 +168,20 @@ namespace Emulator
 
         void CreateFile(String name, bool isFolder = false)
         {
+            var rootFold = path.Peek();
+
+            if (!this.AccessChecker(rootFold, AccessType.toWrite))
+            {
+                MessageBox.Show("У вас нет доступа на запись в данную папку");
+                return;
+            }
+
             try
             {
                 var a = s5fs.CreateFile(path.Peek().inode, name, isFolder);
+                a.daughter.di_uid = this.curr_user_id;
+                a.daughter.di_gid = this.curr_group_id;
+                s5fs.WriteInode(a.daughter);
             }
             catch (Exception exc)
             {
@@ -185,6 +197,13 @@ namespace Emulator
             {
                 throw new Exception($"{file.Name} - не файл");
             }
+
+            if (!this.AccessChecker(file, AccessType.toRead))
+            {
+                MessageBox.Show("У вас нет доступа на чтение данного файла");
+                return;
+            }
+
             var text = Obj.ByteArrToString(s5fs.ReadDataByInode(file.inode));
 
             var max_text_size = (int)(s5fs.max_file_size / 2);
@@ -198,6 +217,12 @@ namespace Emulator
                 {
                     try
                     {
+                        if (!this.AccessChecker(file, AccessType.toWrite))
+                        {
+                            if (file.IsReadOnly || file.IsSystem)
+                                throw new ArgumentException();
+                            throw new OutOfMemoryException();
+                        }
                         var arr = Obj.StringToByteArr(textViewer.TextView);
                         if (arr.Length >= s5fs.max_file_size)
                         {
@@ -206,6 +231,11 @@ namespace Emulator
                         s5fs.WriteDataByInode(file.inode, arr);
                         break;
                     }
+                    catch (ArgumentException)
+                    {
+                        MessageBox.Show("Файл доступен только для чтения");
+                    }
+                    catch (OutOfMemoryException) { }
                     catch (Exception)
                     {
                         MessageBox.Show("Недостаточно места. Уменьшите размер файла.");
@@ -277,7 +307,6 @@ namespace Emulator
             var isFolder = (sender as ToolStripMenuItem) != файлToolStripMenuItem && (sender as ToolStripMenuItem) != файлToolStripMenuItem1;
 
             this.CreateFile(form.Result, isFolder);
-
         }
 
         /// <summary>
@@ -292,6 +321,13 @@ namespace Emulator
             if (objects.Count() is 0)
                 throw new Exception("IDK What's going on");
             var file = objects.First().Value;
+
+            if (!this.AccessChecker(file, AccessType.toRead))
+            {
+                MessageBox.Show($"У вас нет доступа на чтение {(file.isFolder ? "данной папки" : "данного файла")}");
+                return;
+            }
+
             if (file.isFolder)
             {
                 var vs = this.OpenFolder(file);
@@ -323,6 +359,18 @@ namespace Emulator
             var selected_objects = this.GetSelectedObjs();
 
             var obj_to_delete = GetChildObjects(selected_objects);
+
+            if (!this.AccessChecker(this.path.Peek(), AccessType.toWrite))
+            {
+                MessageBox.Show("У вас нет права на запись в родительскую папку");
+                return;
+            }
+
+            if (obj_to_delete.Any(x => this.AccessChecker(x, AccessType.toWrite) is false))
+            {
+                MessageBox.Show("У вас нет права на запись, или удаление одного из файлов/папок");
+                return;
+            }
 
             var size = obj_to_delete.Where(x => x.NLinks is 1).Sum(x => x.GetSize);
             var links = obj_to_delete.Where(x => x.NLinks is not 1).Count();
@@ -384,7 +432,19 @@ namespace Emulator
                 selected_obj_id = dataGridView1.SelectedRows[0].Cells["FileID_Column"].Value;
             }
 
-            var selected_obj = this.objs.Find(x => x.Key.Equals(selected_obj_id)).Value;            
+            var selected_obj = this.objs.Find(x => x.Key.Equals(selected_obj_id)).Value;
+            
+            if (!this.AccessChecker(this.path.Peek(), AccessType.toWrite))
+            {
+                MessageBox.Show("У вас нет доступа к изменению имен в данной папке");
+                return;
+            }
+
+            if (!this.AccessChecker(selected_obj, AccessType.toWrite))
+            {
+                MessageBox.Show("У вас нет доступа к редактированию данного файла");
+                return;
+            }
 
             var names = this.GetFileNamesInCurr();
             NameGetForm form = new(names);
@@ -426,11 +486,17 @@ namespace Emulator
 
             copyCutState = CopyCutState.Copy;
 
-            obj_to_copy.Clear();
-
             copy_from = this.path.Peek();
 
             var to_copy = this.GetSelectedObjs();
+
+            if (to_copy.Any(x => this.AccessChecker(x, AccessType.toRead) is false))
+            {
+                MessageBox.Show("У вас нет права на чтение одного из файлов/папок");
+                return;
+            }
+
+            obj_to_copy.Clear();
 
             foreach (var obj in to_copy)
             {
@@ -450,6 +516,21 @@ namespace Emulator
             copy_from = this.path.Peek();
 
             var to_copy = this.GetSelectedObjs();
+
+            if (!this.AccessChecker(this.path.Peek(), AccessType.toWrite))
+            {
+                MessageBox.Show("У вас нет права удаления файлов из данной папки");
+                return;
+            }
+
+            if (to_copy.Any(x => this.AccessChecker(x, AccessType.toRead) is false) 
+                || to_copy.Any(x => this.AccessChecker(x, AccessType.toWrite) is false))
+            {
+                MessageBox.Show("У вас нет права вырезания данного файла");
+                return;
+            }
+
+            obj_to_copy.Clear();
 
             foreach (var obj in to_copy)
             {
@@ -494,11 +575,30 @@ namespace Emulator
                             "для папки, в которой они находятся.");
                 return;
             }
-                
+
+            if (!this.AccessChecker(this.path.Peek(), AccessType.toWrite))
+            {
+                MessageBox.Show("У вас нет права записи в данную папку");
+                return;
+            }
+
+            if (obj_to_copy.Any(x => this.AccessChecker(x, AccessType.toRead) == false))
+            {
+                MessageBox.Show("У вас нет доступа к чтению одного из файлов");
+                return;
+            }
 
             if (copyCutState is CopyCutState.Copy)
             {
                 var to_copy = this.GetChildObjects(obj_to_copy.ToArray());
+
+                // Проверка, вдруг права изменились
+                // А еще проверка, всех дочерних файлов
+                if (to_copy.Any(x => this.AccessChecker(new("", s5fs.ReadInode(x.inode.index), null), AccessType.toRead) is false))
+                {
+                    MessageBox.Show("У вас нет права чтения как минимум одного из файлов");
+                    return;
+                }
                 
                 Stack<Inode> new_tree = new();
                 Stack<Inode> old_tree = new();
@@ -512,6 +612,7 @@ namespace Emulator
                         old_tree.Pop();
                         new_tree.Pop();
                     }
+
                     var vs1 = this.CopyElement(new_tree.Peek(), obj);
                     if (obj.isFolder)
                     {
@@ -532,7 +633,15 @@ namespace Emulator
                         return;
                     }
                 }
-                
+
+                var vs1 = new Obj("", s5fs.ReadInode(obj_to_copy[0].parent_inode.index), null);
+
+                if (!this.AccessChecker(vs1, AccessType.toWrite))
+                {
+                    MessageBox.Show("У вас нет права на удаление файлов из папки-источника");
+                    return;
+                }
+
                 foreach (var obj in obj_to_copy)
                 {
                     s5fs.AddFileLinkToDirectory(this.path.Peek().inode, obj.inode, obj.Name);
@@ -625,7 +734,6 @@ namespace Emulator
         {
             if (dataGridView1.SelectedRows.Count is not 1)
                 return;
-
             object selected_obj_id;
 
             if (click_position is not null)
@@ -645,7 +753,7 @@ namespace Emulator
 
             var selected_obj = this.objs.Find(x => x.Key.Equals(selected_obj_id)).Value;
 
-            var form = new Properties(selected_obj, 
+            var form = new Properties(selected_obj, curr_user_id,
                 new KeyValuePair<int, string>[] { new KeyValuePair<int, string>(0, "root") });
             var d_result = form.ShowDialog();
             if (d_result is not DialogResult.OK)
@@ -658,6 +766,93 @@ namespace Emulator
             s5fs.WriteInode(obj.inode);
 
             this.UpdateTable(this.UpdateFolder());
+        }
+
+        enum AccessType { toRead, toWrite, toExecute };
+
+        private bool AccessChecker(Obj obj, AccessType accessType)
+        {
+            if (obj.inode.index is 0)
+                return true;
+
+            if (obj.IsReadOnly && accessType is not AccessType.toRead)
+            {
+                return false;
+            }
+
+            //Если рут - может все
+            //PS:
+            //root - ты не сможешь меня победить
+            //Файл: знаю, но он сможет
+            //*ReadOnly выходит*
+            if (curr_user_id is 0)  
+                return true;
+
+            if (obj.IsSystem)
+                return false;
+
+            switch (accessType)
+            {
+                case AccessType.toRead:
+                {
+                    if (obj.UserID == this.curr_user_id)
+                    {
+                        if (obj.OwnerPermissions.CanRead)
+                            return true;
+                    }
+                    else if (obj.GroupID == this.curr_group_id)
+                    {
+                        if (obj.GroupPermissions.CanRead)
+                            return true;
+                    }
+                    else
+                    {
+                        if (obj.OtherPermissions.CanRead)
+                            return true;
+                    }
+
+                    break;
+                }
+                case AccessType.toWrite:
+                {
+                    if (obj.UserID == this.curr_user_id)
+                    {
+                        if (obj.OwnerPermissions.CanWrite)
+                            return true;
+                    }
+                    else if (obj.GroupID == this.curr_group_id)
+                    {
+                        if (obj.GroupPermissions.CanWrite)
+                            return true;
+                    }
+                    else
+                    {
+                        if (obj.OtherPermissions.CanWrite)
+                            return true;
+                    }
+                    break;
+                }
+                case AccessType.toExecute:
+                {
+                    if (obj.UserID == this.curr_user_id)
+                    {
+                        if (obj.OwnerPermissions.CanExecute)
+                            return true;
+                    }
+                    else if (obj.GroupID == this.curr_group_id)
+                    {
+                        if (obj.GroupPermissions.CanExecute)
+                            return true;
+                    }
+                    else
+                    {
+                        if (obj.OtherPermissions.CanExecute)
+                            return true;
+                    }
+                    break;
+                }
+            }
+            return false;
         }
     }
 }

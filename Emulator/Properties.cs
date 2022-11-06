@@ -13,13 +13,15 @@ namespace Emulator
     public partial class Properties : Form
     {
         public Obj obj;
+        ushort curr_user_id;
         KeyValuePair<int, String>[] users;
 
-        public Properties(Obj obj, KeyValuePair<int, String>[] users)
+        public Properties(Obj obj, ushort curr_user_id, KeyValuePair<int, String>[] users)
         {
             InitializeComponent();
             this.obj = obj;
             this.users = users;
+            this.curr_user_id = curr_user_id;
         }
 
         private void Properties_Load(object sender, EventArgs e)
@@ -46,6 +48,26 @@ namespace Emulator
             this.OtherRead_Check.Checked = obj.OtherPermissions.CanRead;
             this.OtherWrite_Check.Checked = obj.OtherPermissions.CanWrite;
             this.OtherExecute_Check.Checked = obj.OtherPermissions.CanExecute;
+
+
+            // Если зашел не создатель, или рут - онли смотреть
+            if (curr_user_id is not 0 || curr_user_id != obj.UserID)
+            {
+                this.isHidden_Check.Click += isSystem_Check_Click;
+                this.isReadOnly_Check.Click += isSystem_Check_Click;
+
+                this.UserRead_Check.Click += isSystem_Check_Click;
+                this.UserWrite_Check.Click += isSystem_Check_Click;
+                this.UserExecute_Check.Click += isSystem_Check_Click;
+
+                this.GroupRead_Check.Click += isSystem_Check_Click;
+                this.GroupWrite_Check.Click += isSystem_Check_Click;
+                this.GroupExecute_Check.Click += isSystem_Check_Click;
+
+                this.OtherRead_Check.Click += isSystem_Check_Click;
+                this.OtherWrite_Check.Click += isSystem_Check_Click;
+                this.OtherExecute_Check.Click += isSystem_Check_Click;
+            }
         }
 
         private void button1_Click(object sender, EventArgs e)

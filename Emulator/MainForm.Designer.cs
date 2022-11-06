@@ -500,14 +500,14 @@
             // файлToolStripMenuItem1
             // 
             this.файлToolStripMenuItem1.Name = "файлToolStripMenuItem1";
-            this.файлToolStripMenuItem1.Size = new System.Drawing.Size(180, 22);
+            this.файлToolStripMenuItem1.Size = new System.Drawing.Size(108, 22);
             this.файлToolStripMenuItem1.Text = "Файл";
             this.файлToolStripMenuItem1.Click += new System.EventHandler(this.CreateFileToolStripMenuItem_Click);
             // 
             // папкуToolStripMenuItem1
             // 
             this.папкуToolStripMenuItem1.Name = "папкуToolStripMenuItem1";
-            this.папкуToolStripMenuItem1.Size = new System.Drawing.Size(180, 22);
+            this.папкуToolStripMenuItem1.Size = new System.Drawing.Size(108, 22);
             this.папкуToolStripMenuItem1.Text = "Папку";
             this.папкуToolStripMenuItem1.Click += new System.EventHandler(this.CreateFileToolStripMenuItem_Click);
             // 
