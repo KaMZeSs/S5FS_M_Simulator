@@ -72,7 +72,7 @@ namespace S5FS
         /// <param name="map"></param>
         private void WriteBitMap(BitMap map)
         {
-            var slicer = Helper.Slicer(map.map, this.sb.s_blen).GetEnumerator();
+            var slicer = Helper<byte>.Slicer(map.map, this.sb.s_blen).GetEnumerator();
             for (UInt32 i = map.start_block; slicer.MoveNext(); i++)
             {
                 this.WriteToDataBlock(slicer.Current, i);
@@ -258,7 +258,7 @@ namespace S5FS
         private UInt32[] GetAddressesFromBlock(byte[] bytes)
         {
             var result = new UInt32[bytes.Length / 4];
-            var sliced = Helper.Slicer(bytes, 4).GetEnumerator();
+            var sliced = Helper<byte>.Slicer(bytes, 4).GetEnumerator();
             for (int i = 0; sliced.MoveNext(); i++)
             {
                 result[i] = BitConverter.ToUInt32(sliced.Current, 0);
@@ -291,7 +291,7 @@ namespace S5FS
         public KeyValuePair<UInt32, String>[] GetFilesFromFolderData(byte[] data)
         {
             var files = new List<KeyValuePair<UInt32, String>>();
-            var splitted = Helper.Slicer(data, 64).GetEnumerator();
+            var splitted = Helper<byte>.Slicer(data, 64).GetEnumerator();
             while (splitted.MoveNext())
             {
                 var id = BitConverter.ToUInt32(splitted.Current, 0);
@@ -946,7 +946,7 @@ namespace S5FS
                 }
             } //Проверка на то, чтобы хватило
 
-            var data_to_write = Helper.Slicer(newData, this.sb.s_blen).GetEnumerator();
+            var data_to_write = Helper<byte>.Slicer(newData, this.sb.s_blen).GetEnumerator();
             data_to_write.MoveNext();
             if (block_num == new_block_num) 
             {

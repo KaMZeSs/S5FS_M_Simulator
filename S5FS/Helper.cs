@@ -6,21 +6,26 @@ using System.Threading.Tasks;
 
 namespace S5FS
 {
-    static class Helper
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <typeparam name="T">Любой тип</typeparam>
+    static class Helper<T>
     {
         /// <summary>
-        /// "Нарезает" входной массив на блоки одинаковой длины. Если последний блок - меньше, остаток заполняется нулями.
+        /// "Нарезает" входной массив на блоки одинаковой длины. Если последний блок - меньше, остаток заполняется дефолтными, или null.
         /// </summary>
         /// <param name="main_array"></param>
         /// <param name="block_size"></param>
         /// <returns></returns>
-        public static IEnumerable<byte[]> Slicer(byte[] main_array, UInt32 block_size)
+        public static IEnumerable<T[]> Slicer(T[] main_array, UInt32 block_size)
         {
-            byte[] result;
+            
+            T[] result;
 
             if (main_array.Length is 0)
             {
-                result = new byte[block_size];
+                result = new T[block_size];
                 yield return result;
             }
 
@@ -34,7 +39,7 @@ namespace S5FS
                 else if (result.Length != (int)block_size)
                 {
                     var temp_arr = result;
-                    result = new byte[block_size];
+                    result = new T[block_size];
                     temp_arr.CopyTo(result, 0);
                     yield return result;
                 }
