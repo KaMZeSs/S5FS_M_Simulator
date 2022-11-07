@@ -16,7 +16,16 @@ namespace Emulator
             // To customize application configuration such as set high DPI settings or default font,
             // see https://aka.ms/applicationconfiguration.
             ApplicationConfiguration.Initialize();
-            Application.Run(new MainForm());
+
+            var openFS = new LoadFS();
+            Application.Run(openFS);
+
+            var vs = openFS.s5FS;
+
+            if (vs is null)
+                return;
+
+            Application.Run(new MainForm(vs));
         }
     }
 }

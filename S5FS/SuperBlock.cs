@@ -95,6 +95,7 @@ namespace S5FS
         /// <param name="array">Обрабатываемый массив.</param>
         /// <returns>Один экземпляр суперблока.</returns>
         /// <exception cref="Exception"></exception>
+        /// <exception cref="InvalidDataException"></exception>
         public static SuperBlock LoadFromByteArray(byte[] array)
         {
             var sb = new SuperBlock();
@@ -104,12 +105,22 @@ namespace S5FS
             }
 
             sb.s_type = array[0];
+
+            if (sb.s_type is not 0xFA)
+            {
+                throw new InvalidDataException();
+            }
+
+
             sb.s_fsize = BitConverter.ToUInt32(array, 1);
             sb.s_isize = BitConverter.ToUInt32(array, 5);
             sb.s_tfree = BitConverter.ToUInt32(array, 9);
             sb.s_tinode = BitConverter.ToUInt32(array, 13);
             sb.s_fmod = array[17];
             sb.s_blen = BitConverter.ToUInt32(array, 18);
+
+            if (max_blocks_per_file is 0)
+                SuperBlock.max_blocks_per_file = 10 + sb.s_blen / sizeof(UInt32) + sb.s_blen / sizeof(UInt32) * sb.s_blen / sizeof(UInt32);
 
             return sb;
         }

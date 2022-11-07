@@ -26,21 +26,21 @@ namespace Emulator
 
         public enum CopyCutState { Copy, Cut, Link, None };
 
-        public MainForm()
+        public MainForm(S5FS.S5FS s5)
         {
             InitializeComponent();
+            this.s5fs = s5;
             dataGridView1.ShowCellToolTips = false;
         }
 
         private void MainForm_Load(object sender, EventArgs e)
         {
-            if (File.Exists("qwe"))
-                File.Delete("qwe");
-            s5fs = S5FS.S5FS.format("qwe", 2048, 52_428_800);
             path = new();
             objs = new();
             var root_inode = s5fs.ReadInode(0);
             this.OpenFolder(new("", root_inode, null));
+
+            this.UpdateTable(this.UpdateFolder());
         }
 
         private void UpdateTable(Obj[] objects)
@@ -523,12 +523,12 @@ namespace Emulator
                 return;
             }
 
-            if (to_copy.Any(x => this.AccessChecker(x, AccessType.toRead) is false) 
-                || to_copy.Any(x => this.AccessChecker(x, AccessType.toWrite) is false))
-            {
-                MessageBox.Show("У вас нет права вырезания данного файла");
-                return;
-            }
+            //if (to_copy.Any(x => this.AccessChecker(x, AccessType.toRead) is false) 
+            //    || to_copy.Any(x => this.AccessChecker(x, AccessType.toWrite) is false))
+            //{
+            //    MessageBox.Show("У вас нет права вырезания как минимум одного из файлов");
+            //    return;
+            //}
 
             obj_to_copy.Clear();
 

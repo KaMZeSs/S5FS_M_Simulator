@@ -544,9 +544,13 @@ namespace S5FS
         /// <returns>Один экземпляр файловой системы.</returns>
         public static S5FS format(String file, UInt32 s_blen, UInt32 disk_size)
         {
+            if (File.Exists(file))
+                File.Delete(file);
+
             S5FS s5FS = new();
             s5FS.fs = new(file, FileMode.OpenOrCreate, FileAccess.ReadWrite);
-            s5FS.fs.Seek(disk_size, SeekOrigin.Begin);
+            s5FS.fs.SetLength(disk_size);
+            s5FS.fs.Flush();
             s5FS.fs.Seek(0, SeekOrigin.Begin);
 
             //Суперблок
@@ -637,6 +641,8 @@ namespace S5FS
 
             //Скок в блок адресов влезет
             s5fs.addr_in_block = s5fs.sb.s_blen / 4;
+
+            s5fs.max_file_size = SuperBlock.max_blocks_per_file * s5fs.sb.s_blen;
 
             //Подгрузить битмапы
             //Иноды
