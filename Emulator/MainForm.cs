@@ -864,5 +864,45 @@ namespace Emulator
             }
             return false;
         }
+
+
+        #region Accounts
+
+        static (UInt16, String, UInt16, String)[] GetUsersFromString(String users_text)
+        {
+            var lines = users_text.Trim().Split('\n');
+
+            var result = new List<(UInt16, String, UInt16, String)>();
+
+            foreach (var line in lines)
+            {
+                var parts = line.Split(':');
+                var uid = UInt16.Parse(parts[0]);
+                var name = parts[1];
+                var gid = UInt16.Parse(parts[2]);
+                var psw = parts[3];
+            }
+
+            return result.OrderBy(x => x.Item1).ToArray();
+        }
+
+        static (UInt16, String)[] GetGroupsFromString(String groups_text)
+        {
+            var lines = groups_text.Trim().Split('\n');
+
+            var result = new List<(UInt16, String)>();
+
+            foreach (var line in lines)
+            {
+                var parts = line.Split(':');
+                var uid = UInt16.Parse(parts[0]);
+                var name = parts[1];
+            }
+
+            return result.OrderBy(x => x.Item1).ToArray();
+        }
+
+
+        #endregion
     }
 }
