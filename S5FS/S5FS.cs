@@ -613,7 +613,32 @@ namespace S5FS
             s5FS.sb.s_tfree--;
             s5FS.sb.s_tinode--;
 
+            S5FS.CreateSystemFiles(s5FS);
+
             return s5FS;
+        }
+
+        //Создание файла с пользователями (id, login, hash-passwd) и группами (id, name)
+        //Если удален чел с последним id, то при создании пользователя - все права перейдут
+        static void CreateSystemFiles(S5FS fs)
+        {
+            var root = fs.ReadInode(0);
+
+            var users = fs.CreateFile(root, "users");
+            var groups = fs.CreateFile(root, "groups");
+
+            users.daughter.di_mode = Inode.Attributes.AttributesToUInt16(
+                Inode.Attributes.ChangeAttributes(
+                    Inode.Attributes.UInt16ToAttributes(users.daughter.di_mode),
+                    OwnerPerm: 4, GroupPerm: 0, OtherPerm: 0, Flags: 7), InodeTypeEnum.File);
+
+            groups.daughter.di_mode = Inode.Attributes.AttributesToUInt16(
+                Inode.Attributes.ChangeAttributes(
+                    Inode.Attributes.UInt16ToAttributes(groups.daughter.di_mode),
+                    OwnerPerm: 4, GroupPerm: 0, OtherPerm: 0, Flags: 7), InodeTypeEnum.File);
+
+            fs.WriteInode(users.daughter);
+            fs.WriteInode(groups.daughter);
         }
 
         /// <summary>

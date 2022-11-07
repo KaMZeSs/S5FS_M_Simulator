@@ -552,6 +552,12 @@ namespace Emulator
 
             var to_copy = this.GetSelectedObjs();
 
+            if (to_copy.Any(x => x.IsSystem))
+            {
+                MessageBox.Show("Нельзя создать ссылку на системный файл");
+                return;
+            }
+
             foreach (var obj in to_copy)
             {
                 obj_to_copy.Add(obj);
@@ -783,8 +789,12 @@ namespace Emulator
             //Если рут - может все
             //PS:
             //root - ты не сможешь меня победить
-            //Файл: знаю, но он сможет
-            //*ReadOnly выходит*
+            //Системный файл: знаю, но он сможет
+            //*ReadOnly выпрыгивает*
+
+            
+            //root не может изменить системный файл, тк он только для чтения
+            //root не может изменить атрибуты файла, тк он системный
             if (curr_user_id is 0)  
                 return true;
 

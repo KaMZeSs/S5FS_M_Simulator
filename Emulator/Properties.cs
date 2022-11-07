@@ -51,7 +51,7 @@ namespace Emulator
 
 
             // Если зашел не создатель, или рут - онли смотреть
-            if (curr_user_id is not 0 || curr_user_id != obj.UserID)
+            if (obj.IsSystem || curr_user_id is not 0 || curr_user_id != obj.UserID)
             {
                 this.isHidden_Check.Click += isSystem_Check_Click;
                 this.isReadOnly_Check.Click += isSystem_Check_Click;
