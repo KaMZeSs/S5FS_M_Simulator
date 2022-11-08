@@ -1,6 +1,6 @@
 ﻿namespace Emulator
 {
-    partial class Accounts
+    partial class Groups
     {
         /// <summary>
         /// Required designer variable.
@@ -30,8 +30,7 @@
         {
             this.dataGridView1 = new System.Windows.Forms.DataGridView();
             this.UserID_Column = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.UserName_Column = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.UserGroup_Column = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Group_Column = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Empty_Column = new System.Windows.Forms.DataGridViewTextBoxColumn();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             this.SuspendLayout();
@@ -43,8 +42,7 @@
             this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dataGridView1.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.UserID_Column,
-            this.UserName_Column,
-            this.UserGroup_Column,
+            this.Group_Column,
             this.Empty_Column});
             this.dataGridView1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.dataGridView1.Location = new System.Drawing.Point(0, 0);
@@ -62,17 +60,11 @@
             this.UserID_Column.Name = "UserID_Column";
             this.UserID_Column.ReadOnly = true;
             // 
-            // UserName_Column
+            // Group_Column
             // 
-            this.UserName_Column.HeaderText = "Логин";
-            this.UserName_Column.Name = "UserName_Column";
-            this.UserName_Column.ReadOnly = true;
-            // 
-            // UserGroup_Column
-            // 
-            this.UserGroup_Column.HeaderText = "Группа";
-            this.UserGroup_Column.Name = "UserGroup_Column";
-            this.UserGroup_Column.ReadOnly = true;
+            this.Group_Column.HeaderText = "Группа";
+            this.Group_Column.Name = "Group_Column";
+            this.Group_Column.ReadOnly = true;
             // 
             // Empty_Column
             // 
@@ -81,15 +73,15 @@
             this.Empty_Column.Name = "Empty_Column";
             this.Empty_Column.ReadOnly = true;
             // 
-            // Accounts
+            // Groups
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
             this.Controls.Add(this.dataGridView1);
-            this.Name = "Accounts";
-            this.Text = "Accounts";
-            this.Activated += new System.EventHandler(this.Accounts_Activated);
+            this.Name = "Groups";
+            this.Text = "Groups";
+            this.Activated += new System.EventHandler(this.Groups_Activated);
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).EndInit();
             this.ResumeLayout(false);
 
@@ -98,8 +90,7 @@
         #endregion
         private DataGridView dataGridView1;
         private DataGridViewTextBoxColumn UserID_Column;
-        private DataGridViewTextBoxColumn UserName_Column;
-        private DataGridViewTextBoxColumn UserGroup_Column;
+        private DataGridViewTextBoxColumn Group_Column;
         private DataGridViewTextBoxColumn Empty_Column;
     }
 }

@@ -30,18 +30,51 @@ namespace Emulator
         (UInt16, String, UInt16, String)[] users;
         (UInt16, String)[] groups;
 
-        public Accounts((UInt16, String, UInt16, String)[] users, (UInt16, String)[] groups)
+        public UInt16 user_id { get; private set; }
+
+        public Accounts(ref (UInt16, String, UInt16, String)[] users,
+            ref (UInt16, String)[] groups, bool getOne = false)
         {
             InitializeComponent();
             this.users = users;
             this.groups = groups;
+
+            if (getOne)
+            {
+                this.dataGridView1.CellDoubleClick += 
+                    new DataGridViewCellEventHandler(this.dataGridView1_CellDoubleClick);
+            }
         }
 
-        private void Accounts_Load(object sender, EventArgs e)
+        public void ChangeData(ref (UInt16, String, UInt16, String)[] users,
+            ref (UInt16, String)[] groups)
         {
-
+            this.users = users;
+            this.groups = groups;
         }
 
-        
+        private void Accounts_Activated(object sender, EventArgs e)
+        {
+            this.DialogResult = DialogResult.None;
+
+            var vs = (from user in users
+                      join gr in groups on user.Item3 equals gr.Item1
+                      select new { id = user.Item1, name = user.Item2, group_name = gr.Item2 })
+                      .ToArray();
+
+            dataGridView1.Rows.Clear();
+
+            foreach (var row in vs)
+            {
+                dataGridView1.Rows.Add(row.id, row.name, row.group_name);
+            }
+        }
+
+        private void dataGridView1_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
+        {
+            this.user_id = (UInt16)dataGridView1.Rows[e.RowIndex].Cells[0].Value;
+            this.DialogResult = DialogResult.OK;
+            this.Close();
+        }
     }
 }
