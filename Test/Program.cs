@@ -11,14 +11,18 @@ namespace Test
 
         public static void Main()
         {
-            var users = new (int, String)[]
-            {
-                new (1, "qwe"),
-                new (2, "asd"),
-                new (3, "zxc")
-            };
+            var array = new UInt16[] { 0, 1, 2, 4, 5, 7, 8 };
 
-            Tester1(ref users);
+            UInt16 index = 0;
+
+            for (UInt16 i = 0; i < array.Length - 1; i++)
+            {
+                if (array[i + 1] - array[i] > 1)
+                {
+                    index = i;
+                    break;
+                }
+            }
         }
 
         public static void Tester1(ref (int, String)[] users)

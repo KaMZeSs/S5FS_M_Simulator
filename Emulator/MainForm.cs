@@ -22,6 +22,12 @@ namespace Emulator
         ushort curr_group_id = 0;
         bool isRoot = true;
 
+        (UInt16, String, UInt16, String)[] users;
+        (UInt16, String, UInt16[])[] groups;
+
+        List<UInt16> currUserGroups = new();
+
+        Obj groups_obj, users_obj;
 
         public enum CopyCutState { Copy, Cut, Link, None };
 
@@ -32,17 +38,83 @@ namespace Emulator
             dataGridView1.ShowCellToolTips = false;
         }
 
-        #region Everything
-
         private void MainForm_Load(object sender, EventArgs e)
         {
             path = new();
             objs = new();
             var root_inode = s5fs.ReadInode(0);
-            this.OpenFolder(new("", root_inode, null));
+            var files = this.OpenFolder(new("", root_inode, null));
+
+            groups_obj = files.First(x => x.Name.Equals("groups"));
+            users_obj = files.First(x => x.Name.Equals("users"));
+
+            this.ReadUsers();
+            this.ReadGroups();
+
+            if (users.Length is 0) // Создать рута
+            {
+                var form = new AddUser((from user in users select user.Item2).ToArray());
+
+                while (true)
+                {
+                    var dialog_result = form.ShowDialog(this);
+                    if (dialog_result is not DialogResult.OK)
+                    {
+                        var res = MessageBox.Show("Вы точно не хотите создать пользователя?",
+                            "Программа будет закрыта",
+                            MessageBoxButtons.YesNo);
+                        if (res is DialogResult.Yes)
+                        {
+                            Application.Exit();
+                        }
+                    }
+                    else
+                        break;
+                }
+
+                var newUserInfo = form.User;
+
+                UInt16 newUserId;
+                try
+                {
+                    newUserId = StaticMethods.GetNextId((from user in users select user.Item1).ToArray());
+                }
+                catch (Exception)
+                {
+                    MessageBox.Show("Невозможно выполнить операцию. Достигнут лимит количества пользователей.");
+                    return;
+                }
+
+                var newGroupName = $"Группа {newUserInfo.Item1}";
+
+                UInt16 newGroupId;
+                try
+                {
+                    newGroupId = StaticMethods.GetNextId((from group_ in groups select group_.Item1).ToArray());
+                }
+                catch (Exception)
+                {
+                    MessageBox.Show("Невозможно выполнить операцию. Достигнут лимит количества групп.");
+                    return;
+                }
+
+                currUserGroups.Add(newGroupId);
+
+                users = users.Append(new(newUserId, newUserInfo.Item1, newGroupId, newUserInfo.Item2)).ToArray();
+                users.OrderBy(x => x.Item1);
+
+                groups = groups.Append(new(newGroupId, newGroupName, new UInt16[] { newUserId })).ToArray();
+                groups.OrderBy(x => x.Item1);
+
+                this.WriteUsers();
+                this.WriteGroups();
+            }
 
             this.UpdateTable(this.UpdateFolder());
         }
+
+
+        #region Everything
 
         private void UpdateTable(Obj[] objects)
         {
@@ -811,7 +883,7 @@ namespace Emulator
                         if (obj.OwnerPermissions.CanRead)
                             return true;
                     }
-                    else if (obj.GroupID == this.curr_group_id)
+                    else if (this.currUserGroups.Contains(obj.GroupID))
                     {
                         if (obj.GroupPermissions.CanRead)
                             return true;
@@ -831,7 +903,7 @@ namespace Emulator
                         if (obj.OwnerPermissions.CanWrite)
                             return true;
                     }
-                    else if (obj.GroupID == this.curr_group_id)
+                    else if (this.currUserGroups.Contains(obj.GroupID))
                     {
                         if (obj.GroupPermissions.CanWrite)
                             return true;
@@ -850,7 +922,7 @@ namespace Emulator
                         if (obj.OwnerPermissions.CanExecute)
                             return true;
                     }
-                    else if (obj.GroupID == this.curr_group_id)
+                    else if (this.currUserGroups.Contains(obj.GroupID))
                     {
                         if (obj.GroupPermissions.CanExecute)
                             return true;
@@ -866,81 +938,135 @@ namespace Emulator
             return false;
         }
 
+        private void обновитьToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            this.UpdateTable(this.OpenFolder(path.Peek()));
+        }
+
         #endregion
 
         #region Accounts
 
-        #region Static
-        static (UInt16, String, UInt16, String)[] GetUsersFromString(String users_text)
+        #region Accecc from file
+        private void ReadUsers()
         {
-            var lines = users_text.Trim().Split(Environment.NewLine);
-
-            var result = new List<(UInt16, String, UInt16, String)>();
-
-            foreach (var line in lines)
-            {
-                var parts = line.Split(':');
-                var uid = UInt16.Parse(parts[0]);
-                var name = parts[1];
-                var gid = UInt16.Parse(parts[2]);
-                var psw = parts[3];
-
-                result.Add(new(uid, name, gid, psw));
-            }
-
-            return result.OrderBy(x => x.Item1).ToArray();
+            var text = Obj.ByteArrToString(s5fs.ReadDataByInode(users_obj.inode));
+            users = StaticMethods.GetUsersFromString(text);
         }
-        static String GetStringFromUsers((UInt16, String, UInt16, String)[] users)
+
+        private void WriteUsers()
         {
-            StringBuilder sb = new();
-
-            foreach(var user in users)
-            {
-                sb.Append($"{user.Item1}:{user.Item2}:{user.Item3}:{user.Item4}{Environment.NewLine}");
-            }
-
-            return sb.ToString();
+            var text = StaticMethods.GetStringFromUsers(users);
+            s5fs.WriteDataByInode(users_obj.inode, Obj.StringToByteArr(text));
         }
-        static (UInt16, String, UInt16[])[] GetGroupsFromString(String groups_text)
+
+        private void ReadGroups()
         {
-            var lines = groups_text.Trim().Split('\n');
-
-            var result = new List<(UInt16, String, UInt16[])>();
-
-            foreach (var line in lines)
-            {
-                var parts = line.Split(':');
-                var uid = UInt16.Parse(parts[0]);
-                var name = parts[1];
-
-                var list = new List<UInt16>();
-                for (int i = 2; i < parts.Length; i++)
-                {
-                    var item = UInt16.Parse(parts[i]);
-                    list.Add(item);
-                }
-
-                result.Add(new(uid, name, list.ToArray()));
-            }
-
-            return result.OrderBy(x => x.Item1).ToArray();
+            var text = Obj.ByteArrToString(s5fs.ReadDataByInode(groups_obj.inode));
+            groups = StaticMethods.GetGroupsFromString(text);
         }
-        static String GetStringFromGroups((UInt16, String, UInt16[])[] groups)
+
+        private void WriteGroups()
         {
-            StringBuilder sb = new();
-
-            foreach (var user in groups)
-            {
-                sb.Append($"{user.Item1}:{user.Item2}:{String.Join(':', user.Item3)}{Environment.NewLine}");
-            }
-
-            return sb.ToString();
+            var text = StaticMethods.GetStringFromGroups(groups);
+            s5fs.WriteDataByInode(groups_obj.inode, Obj.StringToByteArr(text));
         }
+
+        private void UpdateUsersOnDisk()
+        {
+            this.WriteUsers();
+            this.WriteGroups();
+        }
+
         #endregion
+
+        #region WorkWithGroups
+
+        private void DeleteUserFromGroup(UInt16 group_id, UInt16 user_id)
+        {
+            var index = Array.FindIndex(groups, x => x.Item1 == group_id);
+            groups[index] = new(groups[index].Item1, groups[index].Item2,
+                groups[index].Item3.Where(x => x != user_id).ToArray());
+            this.UpdateUsersOnDisk();
+        }
+
+        #endregion
+
+        private void вывестиСписокПользователейToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var form = new Accounts(ref users, ref groups);
+            form.ShowDialog(this);
+        }
+
+        private void удалитьПользователяToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var form = new Accounts(ref users, ref groups, true);
+            var dialog_result = form.ShowDialog();
+            if (dialog_result is not DialogResult.OK)
+                return;
+
+            if (form.user_id is 0)
+            {
+                MessageBox.Show("Суперпользователь не может быть удален!!!");
+                return;
+            }
+
+            var user = users.First(x => x.Item1 == form.user_id);
+
+            users = users.Where(x => x.Item1 != form.user_id).ToArray();
+            this.DeleteUserFromGroup(user.Item3, user.Item1);
+            
+            this.UpdateUsersOnDisk();
+        }
+
+        private void вывестиСписокГруппToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var form = new Groups(ref users, ref groups);
+            form.ShowDialog(this);
+        }
 
         private void создатьПользователяToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            var form = new AddUser((from user in users select user.Item2).ToArray());
+            var dialog_result = form.ShowDialog(this);
+            if (dialog_result is not DialogResult.OK)
+                return;
 
+            var newUserInfo = form.User;
+
+            UInt16 newUserId;
+            try
+            {
+                newUserId = StaticMethods.GetNextId((from user in users select user.Item1).ToArray());
+            }
+            catch (Exception)
+            {
+                MessageBox.Show("Невозможно выполнить операцию. Достигнут лимит количества пользователей.");
+                return;
+            }
+
+            var newGroupName = $"Группа {newUserInfo.Item1}";
+
+            UInt16 newGroupId;
+            try
+            {
+                newGroupId = StaticMethods.GetNextId((from group_ in groups select group_.Item1).ToArray());
+            }
+            catch (Exception)
+            {
+                MessageBox.Show("Невозможно выполнить операцию. Достигнут лимит количества групп.");
+                return;
+            }
+
+            currUserGroups.Add(newGroupId);
+
+            users = users.Append(new(newUserId, newUserInfo.Item1, newGroupId, newUserInfo.Item2)).ToArray();
+            users.OrderBy(x => x.Item1);
+
+            groups = groups.Append(new(newGroupId, newGroupName, new UInt16[] { newUserId })).ToArray();
+            groups.OrderBy(x => x.Item1);
+
+            this.UpdateUsersOnDisk();
         }
 
         #endregion

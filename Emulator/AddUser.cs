@@ -15,12 +15,18 @@ namespace Emulator
     {
         String[] users;
 
+        /// <summary>
+        /// Данные о пользователе
+        /// Item1: UserName
+        /// Item2: PasswordHash (SHA256)
+        /// </summary>
         public (String, String) User { get; private set; }
 
         public AddUser(String[] users)
         {
             InitializeComponent();
             this.users = users;
+            this.ActiveControl = textBox1;
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -57,7 +63,7 @@ namespace Emulator
                 // Send a sample text to hash.  
                 var hashedBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(textBox2.Text));
                 // Get the hashed string.  
-                var hash = BitConverter.ToString(hashedBytes).Replace("-", "").ToLower();
+                var hash = BitConverter.ToString(hashedBytes).Replace("-", "").ToLower(); // 64 символа
 
                 this.User = new(login, hash);
             }

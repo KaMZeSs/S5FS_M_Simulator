@@ -1315,5 +1315,11 @@ namespace S5FS
             this.WriteBitMap(this.bm_block);
             this.WriteSuperBlock();
         }
+
+        public void ChangeCurrUser(UInt16 user_id, UInt16 group_id)
+        {
+            this.curr_user_id = user_id;
+            this.curr_group_id = group_id;
+        }
     }
 }
