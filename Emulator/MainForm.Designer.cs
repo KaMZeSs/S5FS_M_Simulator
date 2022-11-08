@@ -68,6 +68,7 @@
             this.FileModification_Column = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.FileRead_Column = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.FileOwner_Column = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.FileGroup_Column = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.IsSystem_Column = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.IsReadOnly_Column = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.IsHidden_Column = new System.Windows.Forms.DataGridViewCheckBoxColumn();
@@ -104,7 +105,7 @@
             this.panel1.Dock = System.Windows.Forms.DockStyle.Top;
             this.panel1.Location = new System.Drawing.Point(0, 24);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(822, 34);
+            this.panel1.Size = new System.Drawing.Size(922, 34);
             this.panel1.TabIndex = 0;
             // 
             // panel3
@@ -114,7 +115,7 @@
             this.panel3.Dock = System.Windows.Forms.DockStyle.Fill;
             this.panel3.Location = new System.Drawing.Point(35, 0);
             this.panel3.Name = "panel3";
-            this.panel3.Size = new System.Drawing.Size(787, 34);
+            this.panel3.Size = new System.Drawing.Size(887, 34);
             this.panel3.TabIndex = 1;
             // 
             // textBox1
@@ -124,14 +125,14 @@
             this.textBox1.Location = new System.Drawing.Point(0, 0);
             this.textBox1.Name = "textBox1";
             this.textBox1.ReadOnly = true;
-            this.textBox1.Size = new System.Drawing.Size(569, 33);
+            this.textBox1.Size = new System.Drawing.Size(669, 33);
             this.textBox1.TabIndex = 2;
             // 
             // panel4
             // 
             this.panel4.Controls.Add(this.copied_label);
             this.panel4.Dock = System.Windows.Forms.DockStyle.Right;
-            this.panel4.Location = new System.Drawing.Point(569, 0);
+            this.panel4.Location = new System.Drawing.Point(669, 0);
             this.panel4.Name = "panel4";
             this.panel4.Size = new System.Drawing.Size(218, 34);
             this.panel4.TabIndex = 1;
@@ -165,7 +166,7 @@
             this.группаToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Size = new System.Drawing.Size(822, 24);
+            this.menuStrip1.Size = new System.Drawing.Size(922, 24);
             this.menuStrip1.TabIndex = 1;
             this.menuStrip1.Text = "menuStrip1";
             // 
@@ -355,6 +356,7 @@
             this.FileModification_Column,
             this.FileRead_Column,
             this.FileOwner_Column,
+            this.FileGroup_Column,
             this.IsSystem_Column,
             this.IsReadOnly_Column,
             this.IsHidden_Column,
@@ -365,9 +367,10 @@
             this.dataGridView1.RowHeadersWidth = 15;
             this.dataGridView1.RowTemplate.Height = 25;
             this.dataGridView1.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.dataGridView1.Size = new System.Drawing.Size(822, 392);
+            this.dataGridView1.Size = new System.Drawing.Size(922, 423);
             this.dataGridView1.TabIndex = 2;
             this.dataGridView1.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dataGridView1_CellDoubleClick);
+            this.dataGridView1.SortCompare += new System.Windows.Forms.DataGridViewSortCompareEventHandler(this.dataGridView1_SortCompare);
             this.dataGridView1.MouseClick += new System.Windows.Forms.MouseEventHandler(this.dataGridView1_MouseClick);
             // 
             // FileID_Column
@@ -420,9 +423,14 @@
             // 
             // FileOwner_Column
             // 
-            this.FileOwner_Column.HeaderText = "Владелец файла";
+            this.FileOwner_Column.HeaderText = "Владелец";
             this.FileOwner_Column.Name = "FileOwner_Column";
             this.FileOwner_Column.ReadOnly = true;
+            // 
+            // FileGroup_Column
+            // 
+            this.FileGroup_Column.HeaderText = "Группа владелец";
+            this.FileGroup_Column.Name = "FileGroup_Column";
             // 
             // IsSystem_Column
             // 
@@ -582,7 +590,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(822, 450);
+            this.ClientSize = new System.Drawing.Size(922, 481);
             this.Controls.Add(this.dataGridView1);
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.menuStrip1);
@@ -645,6 +653,13 @@
         private ToolStripMenuItem папкуToolStripMenuItem1;
         private ToolStripMenuItem вывестиИнформациюОФСToolStripMenuItem;
         private ToolStripMenuItem очиститьБуферОбменаToolStripMenuItem;
+        private ToolStripMenuItem свойстваToolStripMenuItem1;
+        private ToolStripMenuItem создатьПользователяToolStripMenuItem;
+        private ToolStripMenuItem группаToolStripMenuItem;
+        private ToolStripMenuItem вывестиСписокГруппToolStripMenuItem;
+        private ToolStripMenuItem создатьГруппуToolStripMenuItem;
+        private ToolStripMenuItem изменитьГруппуToolStripMenuItem;
+        private ToolStripMenuItem обновитьToolStripMenuItem;
         private DataGridViewTextBoxColumn FileID_Column;
         private DataGridViewTextBoxColumn FileName_Column;
         private DataGridViewTextBoxColumn FileType_Column;
@@ -654,16 +669,10 @@
         private DataGridViewTextBoxColumn FileModification_Column;
         private DataGridViewTextBoxColumn FileRead_Column;
         private DataGridViewTextBoxColumn FileOwner_Column;
+        private DataGridViewTextBoxColumn FileGroup_Column;
         private DataGridViewCheckBoxColumn IsSystem_Column;
         private DataGridViewCheckBoxColumn IsReadOnly_Column;
         private DataGridViewCheckBoxColumn IsHidden_Column;
         private DataGridViewTextBoxColumn EmptyColumns;
-        private ToolStripMenuItem свойстваToolStripMenuItem1;
-        private ToolStripMenuItem создатьПользователяToolStripMenuItem;
-        private ToolStripMenuItem группаToolStripMenuItem;
-        private ToolStripMenuItem вывестиСписокГруппToolStripMenuItem;
-        private ToolStripMenuItem создатьГруппуToolStripMenuItem;
-        private ToolStripMenuItem изменитьГруппуToolStripMenuItem;
-        private ToolStripMenuItem обновитьToolStripMenuItem;
     }
 }

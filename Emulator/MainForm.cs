@@ -113,7 +113,6 @@ namespace Emulator
             this.UpdateTable(this.UpdateFolder());
         }
 
-
         #region Everything
 
         private void UpdateTable(Obj[] objects)
@@ -149,11 +148,12 @@ namespace Emulator
                 dataGridView1["FileID_Column", i].Value = i;
                 dataGridView1["FileName_Column", i].Value = objects[i].Name;
                 dataGridView1["FileType_Column", i].Value = objects[i].isFolder ? "œ‡ÔÍ‡" : "‘‡ÈÎ";
-                dataGridView1["FileSize_Column", i].Value = objects[i].GetSize;
+                dataGridView1["FileSize_Column", i].Value = objects[i].isFolder ? "" : objects[i].GetSize;
                 dataGridView1["FileCreation_Column", i].Value = objects[i].CreationTime;
                 dataGridView1["FileModification_Column", i].Value = objects[i].ChangeDateTime;
                 dataGridView1["FileRead_Column", i].Value = objects[i].ReadDateTime;
-                dataGridView1["FileOwner_Column", i].Value = objects[i].UserID;
+                dataGridView1["FileOwner_Column", i].Value = users.First(x => x.Item1 == objects[i].UserID).Item2;
+                dataGridView1["FileGroup_Column", i].Value = groups.First(x => x.Item1 == objects[i].GroupID).Item2;
                 dataGridView1["Permissions_Column", i].Value = String.Join(' ',
                     Obj.PermToString(objects[i].OwnerPermissions.Data),
                     Obj.PermToString(objects[i].GroupPermissions.Data),
@@ -389,6 +389,9 @@ namespace Emulator
         /// <param name="e"></param>
         private void dataGridView1_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
         {
+            if (e.RowIndex is -1)
+                return;
+
             var index = (int)dataGridView1["FileID_Column", e.RowIndex].Value;
             var objects = this.objs.Where(x => x.Key == index);
             if (objects.Count() is 0)
@@ -941,6 +944,30 @@ namespace Emulator
         private void Ó·ÌÓ‚ËÚ¸ToolStripMenuItem_Click(object sender, EventArgs e)
         {
             this.UpdateTable(this.OpenFolder(path.Peek()));
+        }
+
+        private void dataGridView1_SortCompare(object sender, DataGridViewSortCompareEventArgs e)
+        {
+            if (e.Column != this.FileSize_Column)
+                return;
+            var value1 = e.CellValue1.ToString();
+            var value2 = e.CellValue2.ToString();
+
+            int value1_to_compare, value2_to_compare;
+
+            Int32.TryParse(value1, out value1_to_compare);
+            Int32.TryParse(value2, out value2_to_compare);
+
+            e.SortResult = value1_to_compare.CompareTo(value2_to_compare);
+
+            if (e.SortResult is 0)
+            {
+                e.SortResult = String.Compare(
+                    dataGridView1.Rows[e.RowIndex1].Cells["FileName_Column"].Value.ToString(),
+                    dataGridView1.Rows[e.RowIndex2].Cells["FileName_Column"].Value.ToString());
+            }
+
+            e.Handled = true;
         }
 
         #endregion
