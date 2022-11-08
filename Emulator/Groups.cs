@@ -14,14 +14,17 @@ namespace Emulator
 {
     public partial class Groups : Form
     {
-        (UInt16, String)[] groups;
+        (UInt16, String, UInt16[])[] groups;
+        (UInt16, String, UInt16, String)[] users;
         public UInt16 group_id { get; private set; }
 
-        public Groups(ref (UInt16, String)[] groups, bool getOne = false)
+        public Groups(ref (UInt16, String, UInt16, String)[] users,
+            ref (UInt16, String, UInt16[])[] groups, bool getOne = false)
         {
             InitializeComponent();
 
             this.groups = groups;
+            this.users = users;
 
             if (getOne)
             {
@@ -30,9 +33,11 @@ namespace Emulator
             }
         }
 
-        public void ChangeData(ref (UInt16, String)[] groups)
+        public void ChangeData(ref (UInt16, String, UInt16, String)[] users,
+            ref (UInt16, String, UInt16[])[] groups)
         {
             this.groups = groups;
+            this.users = users;
         }
 
         private void Groups_Activated(object sender, EventArgs e)
@@ -43,7 +48,11 @@ namespace Emulator
 
             foreach (var row in groups)
             {
-                dataGridView1.Rows.Add(row.Item1, row.Item2);
+                var users = String.Join(", ", 
+                    from user in this.users 
+                    where row.Item3.Contains(user.Item1) 
+                    select user.Item2);
+                dataGridView1.Rows.Add(row.Item1, row.Item2, users);
             }
         }
 

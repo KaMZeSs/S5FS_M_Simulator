@@ -82,6 +82,11 @@
             this.папкуToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.вывестиИнформациюОФСToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.очиститьБуферОбменаToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.создатьПользователяToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.группаToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.вывестиСписокГруппToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.создатьГруппуToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.изменитьГруппуToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.panel1.SuspendLayout();
             this.panel3.SuspendLayout();
             this.panel4.SuspendLayout();
@@ -155,7 +160,8 @@
             // 
             this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.файловаяСистемаToolStripMenuItem,
-            this.пользовательToolStripMenuItem});
+            this.пользовательToolStripMenuItem,
+            this.группаToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
             this.menuStrip1.Size = new System.Drawing.Size(822, 24);
@@ -268,9 +274,10 @@
             // пользовательToolStripMenuItem
             // 
             this.пользовательToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.вывестиСписокПользователейToolStripMenuItem,
             this.сменитьПользователяToolStripMenuItem,
             this.удалитьПользователяToolStripMenuItem,
-            this.вывестиСписокПользователейToolStripMenuItem});
+            this.создатьПользователяToolStripMenuItem});
             this.пользовательToolStripMenuItem.Name = "пользовательToolStripMenuItem";
             this.пользовательToolStripMenuItem.Size = new System.Drawing.Size(96, 20);
             this.пользовательToolStripMenuItem.Text = "Пользователь";
@@ -524,6 +531,41 @@
             this.очиститьБуферОбменаToolStripMenuItem.Text = "Очистить буфер обмена";
             this.очиститьБуферОбменаToolStripMenuItem.Click += new System.EventHandler(this.очиститьБуферОбменаToolStripMenuItem_Click);
             // 
+            // создатьПользователяToolStripMenuItem
+            // 
+            this.создатьПользователяToolStripMenuItem.Name = "создатьПользователяToolStripMenuItem";
+            this.создатьПользователяToolStripMenuItem.Size = new System.Drawing.Size(247, 22);
+            this.создатьПользователяToolStripMenuItem.Text = "Создать пользователя";
+            this.создатьПользователяToolStripMenuItem.Click += new System.EventHandler(this.создатьПользователяToolStripMenuItem_Click);
+            // 
+            // группаToolStripMenuItem
+            // 
+            this.группаToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.вывестиСписокГруппToolStripMenuItem,
+            this.создатьГруппуToolStripMenuItem,
+            this.изменитьГруппуToolStripMenuItem});
+            this.группаToolStripMenuItem.Name = "группаToolStripMenuItem";
+            this.группаToolStripMenuItem.Size = new System.Drawing.Size(61, 20);
+            this.группаToolStripMenuItem.Text = "Группы";
+            // 
+            // вывестиСписокГруппToolStripMenuItem
+            // 
+            this.вывестиСписокГруппToolStripMenuItem.Name = "вывестиСписокГруппToolStripMenuItem";
+            this.вывестиСписокГруппToolStripMenuItem.Size = new System.Drawing.Size(197, 22);
+            this.вывестиСписокГруппToolStripMenuItem.Text = "Вывести список групп";
+            // 
+            // создатьГруппуToolStripMenuItem
+            // 
+            this.создатьГруппуToolStripMenuItem.Name = "создатьГруппуToolStripMenuItem";
+            this.создатьГруппуToolStripMenuItem.Size = new System.Drawing.Size(197, 22);
+            this.создатьГруппуToolStripMenuItem.Text = "Создать группу";
+            // 
+            // изменитьГруппуToolStripMenuItem
+            // 
+            this.изменитьГруппуToolStripMenuItem.Name = "изменитьГруппуToolStripMenuItem";
+            this.изменитьГруппуToolStripMenuItem.Size = new System.Drawing.Size(197, 22);
+            this.изменитьГруппуToolStripMenuItem.Text = "Изменить группу";
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
@@ -605,5 +647,10 @@
         private DataGridViewCheckBoxColumn IsHidden_Column;
         private DataGridViewTextBoxColumn EmptyColumns;
         private ToolStripMenuItem свойстваToolStripMenuItem1;
+        private ToolStripMenuItem создатьПользователяToolStripMenuItem;
+        private ToolStripMenuItem группаToolStripMenuItem;
+        private ToolStripMenuItem вывестиСписокГруппToolStripMenuItem;
+        private ToolStripMenuItem создатьГруппуToolStripMenuItem;
+        private ToolStripMenuItem изменитьГруппуToolStripMenuItem;
     }
 }

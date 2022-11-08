@@ -31,6 +31,7 @@
             this.dataGridView1 = new System.Windows.Forms.DataGridView();
             this.UserID_Column = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Group_Column = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.UsersGroup_Column = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Empty_Column = new System.Windows.Forms.DataGridViewTextBoxColumn();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             this.SuspendLayout();
@@ -43,6 +44,7 @@
             this.dataGridView1.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.UserID_Column,
             this.Group_Column,
+            this.UsersGroup_Column,
             this.Empty_Column});
             this.dataGridView1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.dataGridView1.Location = new System.Drawing.Point(0, 0);
@@ -65,6 +67,12 @@
             this.Group_Column.HeaderText = "Группа";
             this.Group_Column.Name = "Group_Column";
             this.Group_Column.ReadOnly = true;
+            // 
+            // UsersGroup_Column
+            // 
+            this.UsersGroup_Column.HeaderText = "Пользователи";
+            this.UsersGroup_Column.Name = "UsersGroup_Column";
+            this.UsersGroup_Column.ReadOnly = true;
             // 
             // Empty_Column
             // 
@@ -91,6 +99,7 @@
         private DataGridView dataGridView1;
         private DataGridViewTextBoxColumn UserID_Column;
         private DataGridViewTextBoxColumn Group_Column;
+        private DataGridViewTextBoxColumn UsersGroup_Column;
         private DataGridViewTextBoxColumn Empty_Column;
     }
 }

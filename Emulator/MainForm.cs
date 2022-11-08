@@ -1,8 +1,7 @@
+using System.Collections.Generic;
 using System.Text;
 
 using S5FS;
-
-using static System.Net.Mime.MediaTypeNames;
 
 namespace Emulator
 {
@@ -32,6 +31,8 @@ namespace Emulator
             this.s5fs = s5;
             dataGridView1.ShowCellToolTips = false;
         }
+
+        #region Everything
 
         private void MainForm_Load(object sender, EventArgs e)
         {
@@ -865,12 +866,14 @@ namespace Emulator
             return false;
         }
 
+        #endregion
 
         #region Accounts
 
+        #region Static
         static (UInt16, String, UInt16, String)[] GetUsersFromString(String users_text)
         {
-            var lines = users_text.Trim().Split('\n');
+            var lines = users_text.Trim().Split(Environment.NewLine);
 
             var result = new List<(UInt16, String, UInt16, String)>();
 
@@ -881,27 +884,64 @@ namespace Emulator
                 var name = parts[1];
                 var gid = UInt16.Parse(parts[2]);
                 var psw = parts[3];
+
+                result.Add(new(uid, name, gid, psw));
             }
 
             return result.OrderBy(x => x.Item1).ToArray();
         }
+        static String GetStringFromUsers((UInt16, String, UInt16, String)[] users)
+        {
+            StringBuilder sb = new();
 
-        static (UInt16, String)[] GetGroupsFromString(String groups_text)
+            foreach(var user in users)
+            {
+                sb.Append($"{user.Item1}:{user.Item2}:{user.Item3}:{user.Item4}{Environment.NewLine}");
+            }
+
+            return sb.ToString();
+        }
+        static (UInt16, String, UInt16[])[] GetGroupsFromString(String groups_text)
         {
             var lines = groups_text.Trim().Split('\n');
 
-            var result = new List<(UInt16, String)>();
+            var result = new List<(UInt16, String, UInt16[])>();
 
             foreach (var line in lines)
             {
                 var parts = line.Split(':');
                 var uid = UInt16.Parse(parts[0]);
                 var name = parts[1];
+
+                var list = new List<UInt16>();
+                for (int i = 2; i < parts.Length; i++)
+                {
+                    var item = UInt16.Parse(parts[i]);
+                    list.Add(item);
+                }
+
+                result.Add(new(uid, name, list.ToArray()));
             }
 
             return result.OrderBy(x => x.Item1).ToArray();
         }
+        static String GetStringFromGroups((UInt16, String, UInt16[])[] groups)
+        {
+            StringBuilder sb = new();
 
+            foreach (var user in groups)
+            {
+                sb.Append($"{user.Item1}:{user.Item2}:{String.Join(':', user.Item3)}{Environment.NewLine}");
+            }
+
+            return sb.ToString();
+        }
+        #endregion
+
+        private void ñîçäàòüÏîëüçîâàòåëÿToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+
+        }
 
         #endregion
     }

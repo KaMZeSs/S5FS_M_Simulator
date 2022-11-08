@@ -28,12 +28,12 @@ namespace Emulator
     public partial class Accounts : Form 
     {
         (UInt16, String, UInt16, String)[] users;
-        (UInt16, String)[] groups;
+        (UInt16, String, UInt16[])[] groups;
 
         public UInt16 user_id { get; private set; }
 
         public Accounts(ref (UInt16, String, UInt16, String)[] users,
-            ref (UInt16, String)[] groups, bool getOne = false)
+            ref (UInt16, String, UInt16[])[] groups, bool getOne = false)
         {
             InitializeComponent();
             this.users = users;
@@ -47,7 +47,7 @@ namespace Emulator
         }
 
         public void ChangeData(ref (UInt16, String, UInt16, String)[] users,
-            ref (UInt16, String)[] groups)
+            ref (UInt16, String, UInt16[])[] groups)
         {
             this.users = users;
             this.groups = groups;

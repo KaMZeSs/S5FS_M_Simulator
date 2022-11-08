@@ -11,31 +11,26 @@ namespace Test
 
         public static void Main()
         {
-            var users = new (int, string, int)[]
+            var users = new (int, String)[]
             {
-                new (0, "root", 0),
-                new (1, "qwe", 0),
-                new (2, "asd", 1),
-                new (3, "qxz", 2)
+                new (1, "qwe"),
+                new (2, "asd"),
+                new (3, "zxc")
             };
 
-            var a = users.GetType();
-
-            var groups = new (int, string)[]
-            {
-                new (0, "root_group"),
-                new (1, "2nd group"),
-                new (2, "3rd group"),
-                new (3, "4th group")
-            };
-
-            var vs = (from user in users
-                      join gr in groups on user.Item3 equals gr.Item1
-                      select new { id = user.Item1, name = user.Item2, group_name = gr.Item2 })
-                     .ToArray();
+            Tester1(ref users);
         }
 
-        
+        public static void Tester1(ref (int, String)[] users)
+        {
+            users[1] = new(4, "asf2rqweq");
+            Tester2(ref users[2]);
+        }
+
+        public static void Tester2(ref (int, String) user)
+        { 
+            user = new(5, "zxvdsfqweq");
+        }
 
     }
 }
