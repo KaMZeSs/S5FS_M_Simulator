@@ -186,8 +186,8 @@ namespace S5FS
                 di_mtime = 0, // Текущее
                 di_ctime = 0 // Текущее
             };
-            UInt32 block_num = this.bm_block.FirstEmpty();
-            inode.di_addr[0] = block_num;
+            //UInt32 block_num = this.bm_block.FirstEmpty();
+            //inode.di_addr[0] = block_num;
             inode.di_atime = inode.di_mtime = inode.di_ctime = DateTime.Now.Ticks;
             WriteInode(inode);
             //Блок не очищаю, тк в нашем случае все пусто
@@ -195,8 +195,8 @@ namespace S5FS
             //Изменим карты
             this.bm_inode.ChangeBlockState(0, false);
             this.WriteBitMap(bm_inode);
-            this.bm_block.ChangeBlockState(block_num, false);
-            this.WriteBitMap(bm_block);
+            //this.bm_block.ChangeBlockState(block_num, false);
+            //this.WriteBitMap(bm_block);
         }
         
         /// <summary>
@@ -206,6 +206,14 @@ namespace S5FS
         /// <returns></returns>
         public byte[] ReadDataByInode(Inode inode)
         {
+            if (inode.di_size is 0)
+            {
+                inode.di_atime = DateTime.Now.Ticks;
+                this.WriteInode(inode);
+
+                return new byte[0];
+            }
+
             UInt32 block_num = inode.di_size % this.sb.s_blen == 0 ? 
                 inode.di_size / this.sb.s_blen :
                 (inode.di_size / this.sb.s_blen + 1);
@@ -757,8 +765,8 @@ namespace S5FS
             {
                 throw new Exception();
             }
-            var block_num = this.bm_block.FirstEmpty();
-            this.sb.s_tfree--;
+            //var block_num = this.bm_block.FirstEmpty();
+            //this.sb.s_tfree--;
 
             //Если дошли сюда, значит есть свободные блоки/инод
             long time = DateTime.Now.Ticks;
@@ -776,21 +784,21 @@ namespace S5FS
                 di_mtime = time,
                 di_ctime = time,
             };
-            inode.di_addr[0] = block_num;
+            //inode.di_addr[0] = block_num;
 
             WriteInode(inode);
 
             //Изменим карты
             this.bm_inode.ChangeBlockState(inode.index, false);
             this.WriteBitMap(bm_inode);
-            this.bm_block.ChangeBlockState(block_num, false);
-            this.WriteBitMap(bm_block);
+            //this.bm_block.ChangeBlockState(block_num, false);
+            //this.WriteBitMap(bm_block);
 
             //Запишем новый суперблок
             this.WriteSuperBlock();
 
             //Нужно записать фул пустой блок, чтобы мусора не было
-            this.WriteToDataBlock(new byte[this.sb.s_blen], block_num);
+            //this.WriteToDataBlock(new byte[this.sb.s_blen], block_num);
 
             //Запишем инфу о папке в родительскую папку
             this.AddFileLinkToDirectory(root, inode, name);
@@ -923,7 +931,7 @@ namespace S5FS
             UInt32 block_num = inode.di_size % this.sb.s_blen == 0 ?
                 inode.di_size / this.sb.s_blen :
                 (inode.di_size / this.sb.s_blen + 1);
-            if (block_num is 0) block_num = 1;
+            //if (block_num is 0) block_num = 1;
             UInt32 new_block_num = (UInt32)(newData.LongLength % this.sb.s_blen == 0 ?
                 newData.LongLength / this.sb.s_blen :
                 (newData.LongLength / this.sb.s_blen + 1));

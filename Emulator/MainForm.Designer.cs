@@ -56,8 +56,8 @@
             this.создатьПользователяToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.группаToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.вывестиСписокГруппToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.создатьГруппуToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.изменитьГруппуToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.создатьГруппуToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.удалитьГруппуToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.dataGridView1 = new System.Windows.Forms.DataGridView();
             this.FileID_Column = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -300,6 +300,7 @@
             this.сменитьПользователяToolStripMenuItem.Name = "сменитьПользователяToolStripMenuItem";
             this.сменитьПользователяToolStripMenuItem.Size = new System.Drawing.Size(247, 22);
             this.сменитьПользователяToolStripMenuItem.Text = "Сменить пользователя";
+            this.сменитьПользователяToolStripMenuItem.Click += new System.EventHandler(this.сменитьПользователяToolStripMenuItem_Click);
             // 
             // удалитьПользователяToolStripMenuItem
             // 
@@ -319,8 +320,8 @@
             // 
             this.группаToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.вывестиСписокГруппToolStripMenuItem,
-            this.создатьГруппуToolStripMenuItem,
             this.изменитьГруппуToolStripMenuItem,
+            this.создатьГруппуToolStripMenuItem,
             this.удалитьГруппуToolStripMenuItem});
             this.группаToolStripMenuItem.Name = "группаToolStripMenuItem";
             this.группаToolStripMenuItem.Size = new System.Drawing.Size(61, 20);
@@ -333,13 +334,6 @@
             this.вывестиСписокГруппToolStripMenuItem.Text = "Вывести список групп";
             this.вывестиСписокГруппToolStripMenuItem.Click += new System.EventHandler(this.вывестиСписокГруппToolStripMenuItem_Click);
             // 
-            // создатьГруппуToolStripMenuItem
-            // 
-            this.создатьГруппуToolStripMenuItem.Name = "создатьГруппуToolStripMenuItem";
-            this.создатьГруппуToolStripMenuItem.Size = new System.Drawing.Size(197, 22);
-            this.создатьГруппуToolStripMenuItem.Text = "Создать группу";
-            this.создатьГруппуToolStripMenuItem.Click += new System.EventHandler(this.создатьГруппуToolStripMenuItem_Click);
-            // 
             // изменитьГруппуToolStripMenuItem
             // 
             this.изменитьГруппуToolStripMenuItem.Name = "изменитьГруппуToolStripMenuItem";
@@ -347,11 +341,19 @@
             this.изменитьГруппуToolStripMenuItem.Text = "Изменить группу";
             this.изменитьГруппуToolStripMenuItem.Click += new System.EventHandler(this.изменитьГруппуToolStripMenuItem_Click);
             // 
+            // создатьГруппуToolStripMenuItem
+            // 
+            this.создатьГруппуToolStripMenuItem.Name = "создатьГруппуToolStripMenuItem";
+            this.создатьГруппуToolStripMenuItem.Size = new System.Drawing.Size(197, 22);
+            this.создатьГруппуToolStripMenuItem.Text = "Создать группу";
+            this.создатьГруппуToolStripMenuItem.Click += new System.EventHandler(this.создатьГруппуToolStripMenuItem_Click);
+            // 
             // удалитьГруппуToolStripMenuItem
             // 
             this.удалитьГруппуToolStripMenuItem.Name = "удалитьГруппуToolStripMenuItem";
             this.удалитьГруппуToolStripMenuItem.Size = new System.Drawing.Size(197, 22);
             this.удалитьГруппуToolStripMenuItem.Text = "Удалить группу";
+            this.удалитьГруппуToolStripMenuItem.Click += new System.EventHandler(this.удалитьГруппуToolStripMenuItem_Click);
             // 
             // dataGridView1
             // 

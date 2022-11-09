@@ -14,9 +14,9 @@ namespace Emulator
     {
         public Obj obj;
         ushort curr_user_id;
-        KeyValuePair<int, String>[] users;
+        (UInt16, String, UInt16, String)[] users;
 
-        public Properties(Obj obj, ushort curr_user_id, KeyValuePair<int, String>[] users)
+        public Properties(Obj obj, ushort curr_user_id, ref (UInt16, String, UInt16, String)[] users)
         {
             InitializeComponent();
             this.obj = obj;
@@ -28,7 +28,8 @@ namespace Emulator
         {
             this.Name_Label.Text += obj.Name;
             this.Size_Label.Text += obj.GetSize;
-            this.Creator_Label.Text += users.First(x => x.Key == obj.UserID).Value;
+            var owner = users.FirstOrDefault(x => x.Item1 == obj.UserID);
+            this.Creator_Label.Text += owner.Item2 ?? "Пользователь удален";
             this.CreationDate_Label.Text += obj.CreationTime.ToString("f");
             this.ModificationDate_Label.Text += obj.ChangeDateTime.ToString("f");
             this.ReadDate_Label.Text += obj.ReadDateTime.ToString("f");
@@ -49,25 +50,25 @@ namespace Emulator
             this.OtherWrite_Check.Checked = obj.OtherPermissions.CanWrite;
             this.OtherExecute_Check.Checked = obj.OtherPermissions.CanExecute;
 
+            if (curr_user_id == obj.UserID)
+                return;
+            if (curr_user_id is 0)
+                return;
+            
+            this.isHidden_Check.Click += isSystem_Check_Click;
+            this.isReadOnly_Check.Click += isSystem_Check_Click;
 
-            // Если зашел не создатель, или рут - онли смотреть
-            if (obj.IsSystem || curr_user_id is not 0 || curr_user_id != obj.UserID)
-            {
-                this.isHidden_Check.Click += isSystem_Check_Click;
-                this.isReadOnly_Check.Click += isSystem_Check_Click;
+            this.UserRead_Check.Click += isSystem_Check_Click;
+            this.UserWrite_Check.Click += isSystem_Check_Click;
+            this.UserExecute_Check.Click += isSystem_Check_Click;
 
-                this.UserRead_Check.Click += isSystem_Check_Click;
-                this.UserWrite_Check.Click += isSystem_Check_Click;
-                this.UserExecute_Check.Click += isSystem_Check_Click;
+            this.GroupRead_Check.Click += isSystem_Check_Click;
+            this.GroupWrite_Check.Click += isSystem_Check_Click;
+            this.GroupExecute_Check.Click += isSystem_Check_Click;
 
-                this.GroupRead_Check.Click += isSystem_Check_Click;
-                this.GroupWrite_Check.Click += isSystem_Check_Click;
-                this.GroupExecute_Check.Click += isSystem_Check_Click;
-
-                this.OtherRead_Check.Click += isSystem_Check_Click;
-                this.OtherWrite_Check.Click += isSystem_Check_Click;
-                this.OtherExecute_Check.Click += isSystem_Check_Click;
-            }
+            this.OtherRead_Check.Click += isSystem_Check_Click;
+            this.OtherWrite_Check.Click += isSystem_Check_Click;
+            this.OtherExecute_Check.Click += isSystem_Check_Click;
         }
 
         private void button1_Click(object sender, EventArgs e)

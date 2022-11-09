@@ -57,6 +57,8 @@ namespace Emulator
                 var list = new List<UInt16>();
                 for (int i = 2; i < parts.Length; i++)
                 {
+                    if (String.IsNullOrEmpty(parts[i]))
+                        break;
                     var item = UInt16.Parse(parts[i]);
                     list.Add(item);
                 }

@@ -79,9 +79,9 @@
             this.Creator_Label.AutoSize = true;
             this.Creator_Label.Location = new System.Drawing.Point(12, 79);
             this.Creator_Label.Name = "Creator_Label";
-            this.Creator_Label.Size = new System.Drawing.Size(107, 15);
+            this.Creator_Label.Size = new System.Drawing.Size(103, 15);
             this.Creator_Label.TabIndex = 0;
-            this.Creator_Label.Text = "Создатель файла: ";
+            this.Creator_Label.Text = "Владелец файла: ";
             // 
             // CreationDate_Label
             // 
@@ -327,6 +327,7 @@
             this.Controls.Add(this.Creator_Label);
             this.Controls.Add(this.Size_Label);
             this.Controls.Add(this.Name_Label);
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.Name = "Properties";
             this.Text = "Properties";
             this.Load += new System.EventHandler(this.Properties_Load);

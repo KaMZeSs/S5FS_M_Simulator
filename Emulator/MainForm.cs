@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+п»їusing System.Collections.Generic;
 using System.Text;
 using System.Windows.Forms;
 
@@ -52,64 +52,7 @@ namespace Emulator
             this.ReadUsers();
             this.ReadGroups();
 
-            if (users.Length is 0) // Создать рута
-            {
-                var form = new AddUser((from user in users select user.Item2).ToArray());
-
-                while (true)
-                {
-                    var dialog_result = form.ShowDialog(this);
-                    if (dialog_result is not DialogResult.OK)
-                    {
-                        var res = MessageBox.Show("Вы точно не хотите создать пользователя?",
-                            "Программа будет закрыта",
-                            MessageBoxButtons.YesNo);
-                        if (res is DialogResult.Yes)
-                        {
-                            Application.Exit();
-                        }
-                    }
-                    else
-                        break;
-                }
-
-                var newUserInfo = form.User;
-
-                UInt16 newUserId;
-                try
-                {
-                    newUserId = StaticMethods.GetNextId((from user in users select user.Item1).ToArray());
-                }
-                catch (Exception)
-                {
-                    MessageBox.Show("Невозможно выполнить операцию. Достигнут лимит количества пользователей.");
-                    return;
-                }
-
-                var newGroupName = $"Группа {newUserInfo.Item1}";
-
-                UInt16 newGroupId;
-                try
-                {
-                    newGroupId = StaticMethods.GetNextId((from group_ in groups select group_.Item1).ToArray());
-                }
-                catch (Exception)
-                {
-                    MessageBox.Show("Невозможно выполнить операцию. Достигнут лимит количества групп.");
-                    return;
-                }
-
-                currUserGroups.Add(newGroupId);
-
-                users = users.Append(new(newUserId, newUserInfo.Item1, newGroupId, newUserInfo.Item2)).ToArray();
-                users.OrderBy(x => x.Item1);
-
-                groups = groups.Append(new(newGroupId, newGroupName, new UInt16[] { newUserId })).ToArray();
-                groups.OrderBy(x => x.Item1);
-
-                this.WriteUsers();
-                this.WriteGroups();
-            }
+            this.СЃРјРµРЅРёС‚СЊРџРѕР»СЊР·РѕРІР°С‚РµР»СЏToolStripMenuItem.PerformClick();
 
             this.UpdateTable(this.UpdateFolder());
         }
@@ -118,7 +61,7 @@ namespace Emulator
 
         private void UpdateTable(Obj[] objects)
         {
-            //Проверка на то, что открытая папка открыта по ссылке
+            //РџСЂРѕРІРµСЂРєР° РЅР° С‚Рѕ, С‡С‚Рѕ РѕС‚РєСЂС‹С‚Р°СЏ РїР°РїРєР° РѕС‚РєСЂС‹С‚Р° РїРѕ СЃСЃС‹Р»РєРµ
             var last_folder = path.Peek();
             if (path.Count(x => x.inode.index == last_folder.inode.index) is not 1)
             {
@@ -134,27 +77,20 @@ namespace Emulator
 
             for (int i = 0; i < objects.Length; i++)
             {
-                if (!isRoot)
-                {
-                    if (objects[i].UserID != curr_user_id && objects[i].IsHidden)
-                    {
-                        continue;
-                    }
-                }
-                
-
                 dataGridView1.Rows.Add();
                 objs.Add(new KeyValuePair<int, Obj>(i, objects[i]));
 
                 dataGridView1["FileID_Column", i].Value = i;
                 dataGridView1["FileName_Column", i].Value = objects[i].Name;
-                dataGridView1["FileType_Column", i].Value = objects[i].isFolder ? "Папка" : "Файл";
+                dataGridView1["FileType_Column", i].Value = objects[i].isFolder ? "РџР°РїРєР°" : "Р¤Р°Р№Р»";
                 dataGridView1["FileSize_Column", i].Value = objects[i].isFolder ? "" : objects[i].GetSize;
                 dataGridView1["FileCreation_Column", i].Value = objects[i].CreationTime;
                 dataGridView1["FileModification_Column", i].Value = objects[i].ChangeDateTime;
                 dataGridView1["FileRead_Column", i].Value = objects[i].ReadDateTime;
-                dataGridView1["FileOwner_Column", i].Value = users.First(x => x.Item1 == objects[i].UserID).Item2;
-                dataGridView1["FileGroup_Column", i].Value = groups.First(x => x.Item1 == objects[i].GroupID).Item2;
+                var owner = users.FirstOrDefault(x => x.Item1 == objects[i].UserID);
+                dataGridView1["FileOwner_Column", i].Value = owner.Item2 ?? "";
+                var group = groups.FirstOrDefault(x => x.Item1 == objects[i].GroupID);
+                dataGridView1["FileGroup_Column", i].Value = group.Item2 ?? "";
                 dataGridView1["Permissions_Column", i].Value = String.Join(' ',
                     Obj.PermToString(objects[i].OwnerPermissions.Data),
                     Obj.PermToString(objects[i].GroupPermissions.Data),
@@ -163,6 +99,14 @@ namespace Emulator
                 dataGridView1["IsSystem_Column", i].Value = objects[i].IsSystem;
                 dataGridView1["IsReadOnly_Column", i].Value = objects[i].IsReadOnly;
                 dataGridView1["IsHidden_Column", i].Value = objects[i].IsHidden;
+
+                if (!(curr_user_id is 0))
+                {
+                    if (objects[i].UserID != curr_user_id && objects[i].IsHidden)
+                    {
+                        dataGridView1.Rows[i].Visible = false;
+                    }
+                }
             }
 
             click_position = null;
@@ -194,7 +138,7 @@ namespace Emulator
         {
             if (!folder.isFolder)
             {
-                throw new Exception($"{folder.Name} - не папка");
+                throw new Exception($"{folder.Name} - РЅРµ РїР°РїРєР°");
             }
 
             var root_inode = folder.inode;
@@ -246,7 +190,7 @@ namespace Emulator
 
             if (!this.AccessChecker(rootFold, AccessType.toWrite))
             {
-                MessageBox.Show("У вас нет доступа на запись в данную папку");
+                MessageBox.Show("РЈ РІР°СЃ РЅРµС‚ РґРѕСЃС‚СѓРїР° РЅР° Р·Р°РїРёСЃСЊ РІ РґР°РЅРЅСѓСЋ РїР°РїРєСѓ");
                 return;
             }
 
@@ -269,12 +213,12 @@ namespace Emulator
         {
             if (file.isFolder)
             {
-                throw new Exception($"{file.Name} - не файл");
+                throw new Exception($"{file.Name} - РЅРµ С„Р°Р№Р»");
             }
 
             if (!this.AccessChecker(file, AccessType.toRead))
             {
-                MessageBox.Show("У вас нет доступа на чтение данного файла");
+                MessageBox.Show("РЈ РІР°СЃ РЅРµС‚ РґРѕСЃС‚СѓРїР° РЅР° С‡С‚РµРЅРёРµ РґР°РЅРЅРѕРіРѕ С„Р°Р№Р»Р°");
                 return;
             }
 
@@ -287,7 +231,7 @@ namespace Emulator
             while (true)
             {
                 var dialogResult = textViewer.ShowDialog();
-                if (dialogResult is DialogResult.OK) // Перезапись файла
+                if (dialogResult is DialogResult.OK) // РџРµСЂРµР·Р°РїРёСЃСЊ С„Р°Р№Р»Р°
                 {
                     try
                     {
@@ -307,15 +251,15 @@ namespace Emulator
                     }
                     catch (ArgumentException)
                     {
-                        MessageBox.Show("Файл доступен только для чтения");
+                        MessageBox.Show("Р¤Р°Р№Р» РґРѕСЃС‚СѓРїРµРЅ С‚РѕР»СЊРєРѕ РґР»СЏ С‡С‚РµРЅРёСЏ");
                     }
                     catch (OutOfMemoryException) { }
                     catch (Exception)
                     {
-                        MessageBox.Show("Недостаточно места. Уменьшите размер файла.");
+                        MessageBox.Show("РќРµРґРѕСЃС‚Р°С‚РѕС‡РЅРѕ РјРµСЃС‚Р°. РЈРјРµРЅСЊС€РёС‚Рµ СЂР°Р·РјРµСЂ С„Р°Р№Р»Р°.");
                     }
                 }
-                else // Передумал перезаписывать
+                else // РџРµСЂРµРґСѓРјР°Р» РїРµСЂРµР·Р°РїРёСЃС‹РІР°С‚СЊ
                 {
                     break;
                 }
@@ -378,13 +322,13 @@ namespace Emulator
                 return;
             }
 
-            var isFolder = (sender as ToolStripMenuItem) != файлToolStripMenuItem && (sender as ToolStripMenuItem) != файлToolStripMenuItem1;
+            var isFolder = (sender as ToolStripMenuItem) != С„Р°Р№Р»ToolStripMenuItem && (sender as ToolStripMenuItem) != С„Р°Р№Р»ToolStripMenuItem1;
 
             this.CreateFile(form.Result, isFolder);
         }
 
         /// <summary>
-        /// Даблклик по строке
+        /// Р”Р°Р±Р»РєР»РёРє РїРѕ СЃС‚СЂРѕРєРµ
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -401,7 +345,7 @@ namespace Emulator
 
             if (!this.AccessChecker(file, AccessType.toRead))
             {
-                MessageBox.Show($"У вас нет доступа на чтение {(file.isFolder ? "данной папки" : "данного файла")}");
+                MessageBox.Show($"РЈ РІР°СЃ РЅРµС‚ РґРѕСЃС‚СѓРїР° РЅР° С‡С‚РµРЅРёРµ {(file.isFolder ? "РґР°РЅРЅРѕР№ РїР°РїРєРё" : "РґР°РЅРЅРѕРіРѕ С„Р°Р№Р»Р°")}");
                 return;
             }
 
@@ -428,7 +372,7 @@ namespace Emulator
             this.UpdateTable(vs);
         }
 
-        private void удалитьToolStripMenuItem_Click(object sender, EventArgs e)
+        private void СѓРґР°Р»РёС‚СЊToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (dataGridView1.SelectedRows.Count is 0)
                 return;
@@ -439,22 +383,22 @@ namespace Emulator
 
             if (!this.AccessChecker(this.path.Peek(), AccessType.toWrite))
             {
-                MessageBox.Show("У вас нет права на запись в родительскую папку");
+                MessageBox.Show("РЈ РІР°СЃ РЅРµС‚ РїСЂР°РІР° РЅР° Р·Р°РїРёСЃСЊ РІ СЂРѕРґРёС‚РµР»СЊСЃРєСѓСЋ РїР°РїРєСѓ");
                 return;
             }
 
             if (obj_to_delete.Any(x => this.AccessChecker(x, AccessType.toWrite) is false))
             {
-                MessageBox.Show("У вас нет права на запись, или удаление одного из файлов/папок");
+                MessageBox.Show("РЈ РІР°СЃ РЅРµС‚ РїСЂР°РІР° РЅР° Р·Р°РїРёСЃСЊ, РёР»Рё СѓРґР°Р»РµРЅРёРµ РѕРґРЅРѕРіРѕ РёР· С„Р°Р№Р»РѕРІ/РїР°РїРѕРє");
                 return;
             }
 
             var size = obj_to_delete.Where(x => x.NLinks is 1).Sum(x => x.GetSize);
             var links = obj_to_delete.Where(x => x.NLinks is not 1).Count();
 
-            var d_result = MessageBox.Show($"Будет удалено файлов: {obj_to_delete.Length}, занимающих {size} байт." +
-                $"{(links is 0 ? String.Empty : $"Будет удалено ссылок: {links}")}",
-                    "Вы точно хотите удалить папку?", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            var d_result = MessageBox.Show($"Р‘СѓРґРµС‚ СѓРґР°Р»РµРЅРѕ С„Р°Р№Р»РѕРІ: {obj_to_delete.Length}, Р·Р°РЅРёРјР°СЋС‰РёС… {size} Р±Р°Р№С‚." +
+                $"{(links is 0 ? String.Empty : $"Р‘СѓРґРµС‚ СѓРґР°Р»РµРЅРѕ СЃСЃС‹Р»РѕРє: {links}")}",
+                    "Р’С‹ С‚РѕС‡РЅРѕ С…РѕС‚РёС‚Рµ СѓРґР°Р»РёС‚СЊ РїР°РїРєСѓ?", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
             if (d_result is DialogResult.No)
             {
@@ -472,13 +416,13 @@ namespace Emulator
             this.UpdateTable(vs);
         }
 
-        private void вывестиРазмерФСToolStripMenuItem_Click(object sender, EventArgs e)
+        private void РІС‹РІРµСЃС‚РёР Р°Р·РјРµСЂР¤РЎToolStripMenuItem_Click(object sender, EventArgs e)
         {
             //var root_obj = this.path.Last();
             new SystemInfo(this.s5fs).ShowDialog(this);
         }
 
-        private void открытьToolStripMenuItem_Click(object sender, EventArgs e)
+        private void РѕС‚РєСЂС‹С‚СЊToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (dataGridView1.SelectedRows.Count is not 1)
                 return;
@@ -487,7 +431,7 @@ namespace Emulator
                 new(0, dataGridView1.SelectedRows[0].Index));
         }
 
-        private void переименоватьToolStripMenuItem_Click(object sender, EventArgs e)
+        private void РїРµСЂРµРёРјРµРЅРѕРІР°С‚СЊToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (dataGridView1.SelectedRows.Count is not 1) 
                 return;
@@ -513,13 +457,13 @@ namespace Emulator
             
             if (!this.AccessChecker(this.path.Peek(), AccessType.toWrite))
             {
-                MessageBox.Show("У вас нет доступа к изменению имен в данной папке");
+                MessageBox.Show("РЈ РІР°СЃ РЅРµС‚ РґРѕСЃС‚СѓРїР° Рє РёР·РјРµРЅРµРЅРёСЋ РёРјРµРЅ РІ РґР°РЅРЅРѕР№ РїР°РїРєРµ");
                 return;
             }
 
             if (!this.AccessChecker(selected_obj, AccessType.toWrite))
             {
-                MessageBox.Show("У вас нет доступа к редактированию данного файла");
+                MessageBox.Show("РЈ РІР°СЃ РЅРµС‚ РґРѕСЃС‚СѓРїР° Рє СЂРµРґР°РєС‚РёСЂРѕРІР°РЅРёСЋ РґР°РЅРЅРѕРіРѕ С„Р°Р№Р»Р°");
                 return;
             }
 
@@ -556,7 +500,7 @@ namespace Emulator
             return selected_objects.ToArray();
         }
 
-        private void копироватьToolStripMenuItem_Click(object sender, EventArgs e)
+        private void РєРѕРїРёСЂРѕРІР°С‚СЊToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (dataGridView1.SelectedRows.Count is 0)
                 return;
@@ -569,7 +513,7 @@ namespace Emulator
 
             if (to_copy.Any(x => this.AccessChecker(x, AccessType.toRead) is false))
             {
-                MessageBox.Show("У вас нет права на чтение одного из файлов/папок");
+                MessageBox.Show("РЈ РІР°СЃ РЅРµС‚ РїСЂР°РІР° РЅР° С‡С‚РµРЅРёРµ РѕРґРЅРѕРіРѕ РёР· С„Р°Р№Р»РѕРІ/РїР°РїРѕРє");
                 return;
             }
 
@@ -580,10 +524,10 @@ namespace Emulator
                 obj_to_copy.Add(obj);
             }
 
-            copied_label.Text = $"Скопировано элементов: {obj_to_copy.Count}";
+            copied_label.Text = $"РЎРєРѕРїРёСЂРѕРІР°РЅРѕ СЌР»РµРјРµРЅС‚РѕРІ: {obj_to_copy.Count}";
         }
 
-        private void вырезатьToolStripMenuItem_Click(object sender, EventArgs e)
+        private void РІС‹СЂРµР·Р°С‚СЊToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (dataGridView1.SelectedRows.Count is 0)
                 return;
@@ -596,14 +540,14 @@ namespace Emulator
 
             if (!this.AccessChecker(this.path.Peek(), AccessType.toWrite))
             {
-                MessageBox.Show("У вас нет права удаления файлов из данной папки");
+                MessageBox.Show("РЈ РІР°СЃ РЅРµС‚ РїСЂР°РІР° СѓРґР°Р»РµРЅРёСЏ С„Р°Р№Р»РѕРІ РёР· РґР°РЅРЅРѕР№ РїР°РїРєРё");
                 return;
             }
 
             //if (to_copy.Any(x => this.AccessChecker(x, AccessType.toRead) is false) 
             //    || to_copy.Any(x => this.AccessChecker(x, AccessType.toWrite) is false))
             //{
-            //    MessageBox.Show("У вас нет права вырезания как минимум одного из файлов");
+            //    MessageBox.Show("РЈ РІР°СЃ РЅРµС‚ РїСЂР°РІР° РІС‹СЂРµР·Р°РЅРёСЏ РєР°Рє РјРёРЅРёРјСѓРј РѕРґРЅРѕРіРѕ РёР· С„Р°Р№Р»РѕРІ");
             //    return;
             //}
 
@@ -614,10 +558,10 @@ namespace Emulator
                 obj_to_copy.Add(obj);
             }
 
-            copied_label.Text = $"Вырезано элементов: {obj_to_copy.Count}";
+            copied_label.Text = $"Р’С‹СЂРµР·Р°РЅРѕ СЌР»РµРјРµРЅС‚РѕРІ: {obj_to_copy.Count}";
         }
 
-        private void создатьСсылкуToolStripMenuItem_Click(object sender, EventArgs e)
+        private void СЃРѕР·РґР°С‚СЊРЎСЃС‹Р»РєСѓToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (dataGridView1.SelectedRows.Count is 0)
                 return;
@@ -631,7 +575,7 @@ namespace Emulator
 
             if (to_copy.Any(x => x.IsSystem))
             {
-                MessageBox.Show("Нельзя создать ссылку на системный файл");
+                MessageBox.Show("РќРµР»СЊР·СЏ СЃРѕР·РґР°С‚СЊ СЃСЃС‹Р»РєСѓ РЅР° СЃРёСЃС‚РµРјРЅС‹Р№ С„Р°Р№Р»");
                 return;
             }
 
@@ -640,10 +584,10 @@ namespace Emulator
                 obj_to_copy.Add(obj);
             }
 
-            copied_label.Text = $"Элементов для ссылки: {obj_to_copy.Count}";
+            copied_label.Text = $"Р­Р»РµРјРµРЅС‚РѕРІ РґР»СЏ СЃСЃС‹Р»РєРё: {obj_to_copy.Count}";
         }
 
-        private void вставитьToolStripMenuItem_Click(object sender, EventArgs e)
+        private void РІСЃС‚Р°РІРёС‚СЊToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (copyCutState is CopyCutState.None)
                 return;
@@ -653,21 +597,21 @@ namespace Emulator
 
             if (copy_from == path.Peek())
             {
-                MessageBox.Show("Корневая папка, в которую " +
-                            "следует поместить файлы, является дочерней " +
-                            "для папки, в которой они находятся.");
+                MessageBox.Show("РљРѕСЂРЅРµРІР°СЏ РїР°РїРєР°, РІ РєРѕС‚РѕСЂСѓСЋ " +
+                            "СЃР»РµРґСѓРµС‚ РїРѕРјРµСЃС‚РёС‚СЊ С„Р°Р№Р»С‹, СЏРІР»СЏРµС‚СЃСЏ РґРѕС‡РµСЂРЅРµР№ " +
+                            "РґР»СЏ РїР°РїРєРё, РІ РєРѕС‚РѕСЂРѕР№ РѕРЅРё РЅР°С…РѕРґСЏС‚СЃСЏ.");
                 return;
             }
 
             if (!this.AccessChecker(this.path.Peek(), AccessType.toWrite))
             {
-                MessageBox.Show("У вас нет права записи в данную папку");
+                MessageBox.Show("РЈ РІР°СЃ РЅРµС‚ РїСЂР°РІР° Р·Р°РїРёСЃРё РІ РґР°РЅРЅСѓСЋ РїР°РїРєСѓ");
                 return;
             }
 
             if (obj_to_copy.Any(x => this.AccessChecker(x, AccessType.toRead) == false))
             {
-                MessageBox.Show("У вас нет доступа к чтению одного из файлов");
+                MessageBox.Show("РЈ РІР°СЃ РЅРµС‚ РґРѕСЃС‚СѓРїР° Рє С‡С‚РµРЅРёСЋ РѕРґРЅРѕРіРѕ РёР· С„Р°Р№Р»РѕРІ");
                 return;
             }
 
@@ -675,11 +619,11 @@ namespace Emulator
             {
                 var to_copy = this.GetChildObjects(obj_to_copy.ToArray());
 
-                // Проверка, вдруг права изменились
-                // А еще проверка, всех дочерних файлов
+                // РџСЂРѕРІРµСЂРєР°, РІРґСЂСѓРі РїСЂР°РІР° РёР·РјРµРЅРёР»РёСЃСЊ
+                // Рђ РµС‰Рµ РїСЂРѕРІРµСЂРєР°, РІСЃРµС… РґРѕС‡РµСЂРЅРёС… С„Р°Р№Р»РѕРІ
                 if (to_copy.Any(x => this.AccessChecker(new("", s5fs.ReadInode(x.inode.index), null), AccessType.toRead) is false))
                 {
-                    MessageBox.Show("У вас нет права чтения как минимум одного из файлов");
+                    MessageBox.Show("РЈ РІР°СЃ РЅРµС‚ РїСЂР°РІР° С‡С‚РµРЅРёСЏ РєР°Рє РјРёРЅРёРјСѓРј РѕРґРЅРѕРіРѕ РёР· С„Р°Р№Р»РѕРІ");
                     return;
                 }
                 
@@ -710,9 +654,9 @@ namespace Emulator
                 {
                     if (this.path.Any(x => x.inode.Equals(obj.inode)))
                     {
-                        MessageBox.Show("Корневая папка, в которую " +
-                            "следует поместить файлы, является дочерней " +
-                            "для папки, в которой они находятся.");
+                        MessageBox.Show("РљРѕСЂРЅРµРІР°СЏ РїР°РїРєР°, РІ РєРѕС‚РѕСЂСѓСЋ " +
+                            "СЃР»РµРґСѓРµС‚ РїРѕРјРµСЃС‚РёС‚СЊ С„Р°Р№Р»С‹, СЏРІР»СЏРµС‚СЃСЏ РґРѕС‡РµСЂРЅРµР№ " +
+                            "РґР»СЏ РїР°РїРєРё, РІ РєРѕС‚РѕСЂРѕР№ РѕРЅРё РЅР°С…РѕРґСЏС‚СЃСЏ.");
                         return;
                     }
                 }
@@ -721,7 +665,7 @@ namespace Emulator
 
                 if (!this.AccessChecker(vs1, AccessType.toWrite))
                 {
-                    MessageBox.Show("У вас нет права на удаление файлов из папки-источника");
+                    MessageBox.Show("РЈ РІР°СЃ РЅРµС‚ РїСЂР°РІР° РЅР° СѓРґР°Р»РµРЅРёРµ С„Р°Р№Р»РѕРІ РёР· РїР°РїРєРё-РёСЃС‚РѕС‡РЅРёРєР°");
                     return;
                 }
 
@@ -737,9 +681,9 @@ namespace Emulator
                 {
                     if (this.path.Any(x => x.inode.Equals(obj.inode)))
                     {
-                        MessageBox.Show("Корневая папка, в которую " +
-                            "следует поместить ссылку, является дочерней " +
-                            "для папки, в которой они находятся.");
+                        MessageBox.Show("РљРѕСЂРЅРµРІР°СЏ РїР°РїРєР°, РІ РєРѕС‚РѕСЂСѓСЋ " +
+                            "СЃР»РµРґСѓРµС‚ РїРѕРјРµСЃС‚РёС‚СЊ СЃСЃС‹Р»РєСѓ, СЏРІР»СЏРµС‚СЃСЏ РґРѕС‡РµСЂРЅРµР№ " +
+                            "РґР»СЏ РїР°РїРєРё, РІ РєРѕС‚РѕСЂРѕР№ РѕРЅРё РЅР°С…РѕРґСЏС‚СЃСЏ.");
                         return;
                     }
 
@@ -773,11 +717,11 @@ namespace Emulator
             {
                 if (copyCutState is CopyCutState.None)
                 {
-                    System_ContextMenu.Items["вставитьToolStripMenuItem1"].Enabled = false;
+                    System_ContextMenu.Items["РІСЃС‚Р°РІРёС‚СЊToolStripMenuItem1"].Enabled = false;
                 }
                 else
                 {
-                    System_ContextMenu.Items["вставитьToolStripMenuItem1"].Enabled = true;
+                    System_ContextMenu.Items["РІСЃС‚Р°РІРёС‚СЊToolStripMenuItem1"].Enabled = true;
                 }
                 System_ContextMenu.Show(Cursor.Position.X, Cursor.Position.Y);
             }
@@ -791,29 +735,29 @@ namespace Emulator
 
                 if (dataGridView1.SelectedRows.Count is not 1)
                 {
-                    File_ContextMenu.Items["открытьToolStripMenuItem1"].Enabled = false;
-                    File_ContextMenu.Items["переименоватьToolStripMenuItem1"].Enabled = false;
-                    File_ContextMenu.Items["свойстваToolStripMenuItem1"].Enabled = false;
+                    File_ContextMenu.Items["РѕС‚РєСЂС‹С‚СЊToolStripMenuItem1"].Enabled = false;
+                    File_ContextMenu.Items["РїРµСЂРµРёРјРµРЅРѕРІР°С‚СЊToolStripMenuItem1"].Enabled = false;
+                    File_ContextMenu.Items["СЃРІРѕР№СЃС‚РІР°ToolStripMenuItem1"].Enabled = false;
                 }
                 else
                 {
-                    File_ContextMenu.Items["открытьToolStripMenuItem1"].Enabled = true;
-                    File_ContextMenu.Items["переименоватьToolStripMenuItem1"].Enabled = true;
-                    File_ContextMenu.Items["свойстваToolStripMenuItem1"].Enabled = true;
+                    File_ContextMenu.Items["РѕС‚РєСЂС‹С‚СЊToolStripMenuItem1"].Enabled = true;
+                    File_ContextMenu.Items["РїРµСЂРµРёРјРµРЅРѕРІР°С‚СЊToolStripMenuItem1"].Enabled = true;
+                    File_ContextMenu.Items["СЃРІРѕР№СЃС‚РІР°ToolStripMenuItem1"].Enabled = true;
                 }
 
                 File_ContextMenu.Show(Cursor.Position.X, Cursor.Position.Y);
             }
         }
 
-        private void очиститьБуферОбменаToolStripMenuItem_Click(object sender, EventArgs e)
+        private void РѕС‡РёСЃС‚РёС‚СЊР‘СѓС„РµСЂРћР±РјРµРЅР°ToolStripMenuItem_Click(object sender, EventArgs e)
         {
             obj_to_copy.Clear();
-            copied_label.Text = "Нет скопированных элементов";
+            copied_label.Text = "РќРµС‚ СЃРєРѕРїРёСЂРѕРІР°РЅРЅС‹С… СЌР»РµРјРµРЅС‚РѕРІ";
             copyCutState = CopyCutState.None;
         }
 
-        private void свойстваToolStripMenuItem1_Click(object sender, EventArgs e)
+        private void СЃРІРѕР№СЃС‚РІР°ToolStripMenuItem1_Click(object sender, EventArgs e)
         {
             if (dataGridView1.SelectedRows.Count is not 1)
                 return;
@@ -836,8 +780,7 @@ namespace Emulator
 
             var selected_obj = this.objs.Find(x => x.Key.Equals(selected_obj_id)).Value;
 
-            var form = new Properties(selected_obj, curr_user_id,
-                new KeyValuePair<int, string>[] { new KeyValuePair<int, string>(0, "root") });
+            var form = new Properties(selected_obj, curr_user_id, ref users);
             var d_result = form.ShowDialog();
             if (d_result is not DialogResult.OK)
             {
@@ -863,15 +806,15 @@ namespace Emulator
                 return false;
             }
 
-            //Если рут - может все
+            //Р•СЃР»Рё СЂСѓС‚ - РјРѕР¶РµС‚ РІСЃРµ
             //PS:
-            //root - ты не сможешь меня победить
-            //Системный файл: знаю, но он сможет
-            //*ReadOnly выпрыгивает*
+            //root - С‚С‹ РЅРµ СЃРјРѕР¶РµС€СЊ РјРµРЅСЏ РїРѕР±РµРґРёС‚СЊ
+            //РЎРёСЃС‚РµРјРЅС‹Р№ С„Р°Р№Р»: Р·РЅР°СЋ, РЅРѕ РѕРЅ СЃРјРѕР¶РµС‚
+            //*ReadOnly РІС‹РїСЂС‹РіРёРІР°РµС‚*
 
             
-            //root не может изменить системный файл, тк он только для чтения
-            //root не может изменить атрибуты файла, тк он системный
+            //root РЅРµ РјРѕР¶РµС‚ РёР·РјРµРЅРёС‚СЊ СЃРёСЃС‚РµРјРЅС‹Р№ С„Р°Р№Р», С‚Рє РѕРЅ С‚РѕР»СЊРєРѕ РґР»СЏ С‡С‚РµРЅРёСЏ
+            //root РЅРµ РјРѕР¶РµС‚ РёР·РјРµРЅРёС‚СЊ Р°С‚СЂРёР±СѓС‚С‹ С„Р°Р№Р»Р°, С‚Рє РѕРЅ СЃРёСЃС‚РµРјРЅС‹Р№
             if (curr_user_id is 0)  
                 return true;
 
@@ -942,7 +885,7 @@ namespace Emulator
             return false;
         }
 
-        private void обновитьToolStripMenuItem_Click(object sender, EventArgs e)
+        private void РѕР±РЅРѕРІРёС‚СЊToolStripMenuItem_Click(object sender, EventArgs e)
         {
             this.UpdateTable(this.OpenFolder(path.Peek()));
         }
@@ -1020,13 +963,13 @@ namespace Emulator
 
         #endregion
 
-        private void вывестиСписокПользователейToolStripMenuItem_Click(object sender, EventArgs e)
+        private void РІС‹РІРµСЃС‚РёРЎРїРёСЃРѕРєРџРѕР»СЊР·РѕРІР°С‚РµР»РµР№ToolStripMenuItem_Click(object sender, EventArgs e)
         {
             var form = new Accounts(ref users, ref groups);
             form.ShowDialog(this);
         }
 
-        private void удалитьПользователяToolStripMenuItem_Click(object sender, EventArgs e)
+        private void СѓРґР°Р»РёС‚СЊРџРѕР»СЊР·РѕРІР°С‚РµР»СЏToolStripMenuItem_Click(object sender, EventArgs e)
         {
             var form = new Accounts(ref users, ref groups, true);
             var dialog_result = form.ShowDialog();
@@ -1035,7 +978,13 @@ namespace Emulator
 
             if (form.user_id is 0)
             {
-                MessageBox.Show("Суперпользователь не может быть удален!!!");
+                MessageBox.Show("РЎСѓРїРµСЂРїРѕР»СЊР·РѕРІР°С‚РµР»СЊ РЅРµ РјРѕР¶РµС‚ Р±С‹С‚СЊ СѓРґР°Р»РµРЅ!!!");
+                return;
+            }
+
+            if (form.user_id == curr_user_id)
+            {
+                MessageBox.Show("РќРµР»СЊР·СЏ СѓРґР°Р»РёС‚СЊ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ, Р°РєС‚РёРІРЅРѕРіРѕ РІ РґР°РЅРЅС‹Р№ РјРѕРјРµРЅС‚!!!");
                 return;
             }
 
@@ -1043,17 +992,19 @@ namespace Emulator
 
             users = users.Where(x => x.Item1 != form.user_id).ToArray();
             this.DeleteUserFromGroup(user.Item3, user.Item1);
-            
+
             this.UpdateUsersOnDisk();
+            if (path.Count is 1)
+                this.UpdateTable(this.UpdateFolder());
         }
 
-        private void вывестиСписокГруппToolStripMenuItem_Click(object sender, EventArgs e)
+        private void РІС‹РІРµСЃС‚РёРЎРїРёСЃРѕРєР“СЂСѓРїРїToolStripMenuItem_Click(object sender, EventArgs e)
         {
             var form = new Groups(ref users, ref groups);
             form.ShowDialog(this);
         }
 
-        private void создатьГруппуToolStripMenuItem_Click(object sender, EventArgs e)
+        private void СЃРѕР·РґР°С‚СЊР“СЂСѓРїРїСѓToolStripMenuItem_Click(object sender, EventArgs e)
         {
             var form = new AddGroup((from gr in groups select gr.Item2).ToArray());
 
@@ -1068,15 +1019,20 @@ namespace Emulator
             }
             catch (Exception)
             {
-                MessageBox.Show("Невозможно выполнить операцию. Достигнут лимит количества групп.");
+                MessageBox.Show("РќРµРІРѕР·РјРѕР¶РЅРѕ РІС‹РїРѕР»РЅРёС‚СЊ РѕРїРµСЂР°С†РёСЋ. Р”РѕСЃС‚РёРіРЅСѓС‚ Р»РёРјРёС‚ РєРѕР»РёС‡РµСЃС‚РІР° РіСЂСѓРїРї.");
                 return;
             }
 
             groups = groups.Append(new(newGroupId, form.GroupName, new UInt16[0])).ToArray();
             groups.OrderBy(x => x.Item1);
+
+            this.UpdateUsersOnDisk();
+
+            if (path.Count is 1)
+                this.UpdateTable(this.UpdateFolder());
         }
 
-        private void изменитьГруппуToolStripMenuItem_Click(object sender, EventArgs e)
+        private void РёР·РјРµРЅРёС‚СЊР“СЂСѓРїРїСѓToolStripMenuItem_Click(object sender, EventArgs e)
         {
             UInt16 gid;
             var form = new Groups(ref users, ref groups, true);
@@ -1090,7 +1046,7 @@ namespace Emulator
                     break;
                 if (this.curr_group_id == gid)
                     break;
-                MessageBox.Show("У вас нет доступа на изменение групп, не являющихся вашей главной группой.");
+                MessageBox.Show("РЈ РІР°СЃ РЅРµС‚ РґРѕСЃС‚СѓРїР° РЅР° РёР·РјРµРЅРµРЅРёРµ РіСЂСѓРїРї, РЅРµ СЏРІР»СЏСЋС‰РёС…СЃСЏ РІР°С€РµР№ РіР»Р°РІРЅРѕР№ РіСЂСѓРїРїРѕР№.");
             }
             using (var change_form = new ReductGroup(ref groups, ref users, gid))
             {
@@ -1098,11 +1054,12 @@ namespace Emulator
                 if (dialog_result is not DialogResult.OK)
                     return;
             }
-            this.WriteUsers();
-            this.WriteGroups();
+            this.UpdateUsersOnDisk();
+            if (path.Count is 1)
+                this.UpdateTable(this.UpdateFolder());
         }
 
-        private void создатьПользователяToolStripMenuItem_Click(object sender, EventArgs e)
+        private void СЃРѕР·РґР°С‚СЊРџРѕР»СЊР·РѕРІР°С‚РµР»СЏToolStripMenuItem_Click(object sender, EventArgs e)
         {
             var form = new AddUser((from user in users select user.Item2).ToArray());
             var dialog_result = form.ShowDialog(this);
@@ -1118,11 +1075,11 @@ namespace Emulator
             }
             catch (Exception)
             {
-                MessageBox.Show("Невозможно выполнить операцию. Достигнут лимит количества пользователей.");
+                MessageBox.Show("РќРµРІРѕР·РјРѕР¶РЅРѕ РІС‹РїРѕР»РЅРёС‚СЊ РѕРїРµСЂР°С†РёСЋ. Р”РѕСЃС‚РёРіРЅСѓС‚ Р»РёРјРёС‚ РєРѕР»РёС‡РµСЃС‚РІР° РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№.");
                 return;
             }
 
-            var newGroupName = $"Группа {newUserInfo.Item1}";
+            var newGroupName = $"Р“СЂСѓРїРїР° {newUserInfo.Item1}";
 
             UInt16 newGroupId;
             try
@@ -1131,11 +1088,9 @@ namespace Emulator
             }
             catch (Exception)
             {
-                MessageBox.Show("Невозможно выполнить операцию. Достигнут лимит количества групп.");
+                MessageBox.Show("РќРµРІРѕР·РјРѕР¶РЅРѕ РІС‹РїРѕР»РЅРёС‚СЊ РѕРїРµСЂР°С†РёСЋ. Р”РѕСЃС‚РёРіРЅСѓС‚ Р»РёРјРёС‚ РєРѕР»РёС‡РµСЃС‚РІР° РіСЂСѓРїРї.");
                 return;
             }
-
-            currUserGroups.Add(newGroupId);
 
             users = users.Append(new(newUserId, newUserInfo.Item1, newGroupId, newUserInfo.Item2)).ToArray();
             users.OrderBy(x => x.Item1);
@@ -1144,9 +1099,11 @@ namespace Emulator
             groups.OrderBy(x => x.Item1);
 
             this.UpdateUsersOnDisk();
+            if (path.Count is 1)
+                this.UpdateTable(this.UpdateFolder());
         }
 
-        private void изменитьГруппуToolStripMenuItem1_Click(object sender, EventArgs e)
+        private void РёР·РјРµРЅРёС‚СЊР“СЂСѓРїРїСѓToolStripMenuItem1_Click(object sender, EventArgs e)
         {
             if (dataGridView1.SelectedRows.Count is 0)
                 return;
@@ -1156,8 +1113,8 @@ namespace Emulator
             if (selected_objects.Any(x => x.IsSystem))
             {
                 var dr_system =
-                    MessageBox.Show("Пропустить их?",
-                    "Один, или несколько файлов - системные",
+                    MessageBox.Show("РџСЂРѕРїСѓСЃС‚РёС‚СЊ РёС…?",
+                    "РћРґРёРЅ, РёР»Рё РЅРµСЃРєРѕР»СЊРєРѕ С„Р°Р№Р»РѕРІ - СЃРёСЃС‚РµРјРЅС‹Рµ",
                     MessageBoxButtons.OKCancel);
                 if (dr_system is DialogResult.Cancel)
                     return;
@@ -1166,8 +1123,8 @@ namespace Emulator
                 selected_objects.Any(x => x.UserID != this.curr_user_id))
             {
                 var dr_user =
-                    MessageBox.Show("Пропустить их?",
-                    "Один, или несколько файлов не принадлежат вам",
+                    MessageBox.Show("РџСЂРѕРїСѓСЃС‚РёС‚СЊ РёС…?",
+                    "РћРґРёРЅ, РёР»Рё РЅРµСЃРєРѕР»СЊРєРѕ С„Р°Р№Р»РѕРІ РЅРµ РїСЂРёРЅР°РґР»РµР¶Р°С‚ РІР°Рј",
                     MessageBoxButtons.OKCancel);
                 if (dr_user is DialogResult.Cancel)
                     return;
@@ -1191,7 +1148,7 @@ namespace Emulator
             this.UpdateTable(this.UpdateFolder());
         }
 
-        private void изменитьВладельцаToolStripMenuItem_Click(object sender, EventArgs e)
+        private void РёР·РјРµРЅРёС‚СЊР’Р»Р°РґРµР»СЊС†Р°ToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (dataGridView1.SelectedRows.Count is 0)
                 return;
@@ -1201,8 +1158,8 @@ namespace Emulator
             if (selected_objects.Any(x => x.IsSystem))
             {
                 var dr_system = 
-                    MessageBox.Show("Пропустить их?",
-                    "Один, или несколько файлов - системные", 
+                    MessageBox.Show("РџСЂРѕРїСѓСЃС‚РёС‚СЊ РёС…?",
+                    "РћРґРёРЅ, РёР»Рё РЅРµСЃРєРѕР»СЊРєРѕ С„Р°Р№Р»РѕРІ - СЃРёСЃС‚РµРјРЅС‹Рµ", 
                     MessageBoxButtons.OKCancel);
                 if (dr_system is DialogResult.Cancel)
                     return;
@@ -1211,8 +1168,8 @@ namespace Emulator
                 selected_objects.Any(x => x.UserID != this.curr_user_id))
             {
                 var dr_user =
-                    MessageBox.Show("Пропустить их?",
-                    "Один, или несколько файлов не принадлежат вам", 
+                    MessageBox.Show("РџСЂРѕРїСѓСЃС‚РёС‚СЊ РёС…?",
+                    "РћРґРёРЅ, РёР»Рё РЅРµСЃРєРѕР»СЊРєРѕ С„Р°Р№Р»РѕРІ РЅРµ РїСЂРёРЅР°РґР»РµР¶Р°С‚ РІР°Рј", 
                     MessageBoxButtons.OKCancel);
                 if (dr_user is DialogResult.Cancel)
                     return;
@@ -1234,6 +1191,117 @@ namespace Emulator
             }
 
             this.UpdateTable(this.UpdateFolder());
+        }
+
+        private void СЃРјРµРЅРёС‚СЊРџРѕР»СЊР·РѕРІР°С‚РµР»СЏToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var form = new Login(ref this.users);
+
+            while (true)
+            {
+                var dialog_result = form.ShowDialog(this);
+                if (dialog_result is not DialogResult.OK)
+                    return;
+
+                var UserInfo = form.LoggedUser;
+
+                var isNewUser = form.LoggedUser.Item1 is null;
+
+                if (isNewUser) 
+                {
+                    UInt16 newUserId;
+                    try
+                    {
+                        newUserId = StaticMethods.GetNextId((from user in users select user.Item1).ToArray());
+                    }
+                    catch (Exception)
+                    {
+                        MessageBox.Show("Р”РѕСЃС‚РёРіРЅСѓС‚ Р»РёРјРёС‚ РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№.");
+                        continue;
+                    }
+
+                    var newGroupName = $"Р“СЂСѓРїРїР° {UserInfo.Item2}";
+
+                    UInt16 newGroupId;
+                    try
+                    {
+                        newGroupId = StaticMethods.GetNextId((from group_ in groups select group_.Item1).ToArray());
+                    }
+                    catch (Exception)
+                    {
+                        MessageBox.Show("Р”РѕСЃС‚РёРіРЅСѓС‚ Р»РёРјРёС‚ РіСЂСѓРїРї.");
+                        continue;
+                    }
+
+                    users = users.Append(new(newUserId, UserInfo.Item2, newGroupId, UserInfo.Item4)).ToArray();
+                    users.OrderBy(x => x.Item1);
+
+                    groups = groups.Append(new(newGroupId, newGroupName, new UInt16[] { newUserId })).ToArray();
+                    groups.OrderBy(x => x.Item1);
+
+                    curr_user_id = newUserId;
+                    curr_group_id = newGroupId;
+
+                    currUserGroups = (from gr in this.groups
+                                      .Where(x => x.Item3.Contains(newUserId)).ToArray()
+                                      select gr.Item1).ToList();
+
+                    this.UpdateUsersOnDisk();
+                    if (path.Count is 1)
+                        this.UpdateTable(this.UpdateFolder());
+                    break;
+                }
+                else
+                {
+                    try
+                    {
+                        curr_user_id = UserInfo.Item1 ?? throw new Exception();
+                        curr_group_id = UserInfo.Item3 ?? throw new Exception();
+
+                        currUserGroups = (from gr in this.groups
+                                      .Where(x => x.Item3.Contains(curr_user_id)).ToArray()
+                                          select gr.Item1).ToList();
+                        if (path.Count is 1)
+                            this.UpdateTable(this.UpdateFolder());
+                        break;
+                    }
+                    catch
+                    {
+                        MessageBox.Show("РџСЂРѕРёР·РѕС€Р»Р° РЅРµРїСЂРµРґРІРёРґРµРЅРЅР°СЏ РѕС€РёР±РєР° РїСЂРё РІС…РѕРґРµ РІ Р°РєРєР°СѓРЅС‚");
+                        return;
+                    }
+                }
+            }
+            this.Text = users.First(x => x.Item1 == this.curr_user_id).Item2;
+
+
+            var isRoot = this.curr_user_id is 0;
+            this.СЃРѕР·РґР°С‚СЊРџРѕР»СЊР·РѕРІР°С‚РµР»СЏToolStripMenuItem.Enabled = isRoot;
+            this.СѓРґР°Р»РёС‚СЊРџРѕР»СЊР·РѕРІР°С‚РµР»СЏToolStripMenuItem.Enabled = isRoot;
+            this.СЃРѕР·РґР°С‚СЊР“СЂСѓРїРїСѓToolStripMenuItem.Enabled = isRoot;
+            this.СѓРґР°Р»РёС‚СЊР“СЂСѓРїРїСѓToolStripMenuItem.Enabled = isRoot;
+        }
+
+        private void СѓРґР°Р»РёС‚СЊР“СЂСѓРїРїСѓToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var form = new Groups(ref users, ref groups, true);
+            var dialog_result = form.ShowDialog();
+            if (dialog_result is not DialogResult.OK)
+                return;
+
+            var group = groups.First(x => x.Item1 == form.group_id);
+
+            if (group.Item3.Length is not 0)
+            {
+                MessageBox.Show("РќРµРІРѕР·РјРѕР¶РЅРѕ СѓРґР°Р»РёС‚СЊ РіСЂСѓРїРїСѓ, РІ РєРѕС‚РѕСЂРѕР№ СЃРѕСЃС‚РѕСЏС‚ РїРѕР»СЊР·РѕРІР°С‚РµР»Рё.");
+                return;
+            }
+
+            groups = groups.Where(x => x.Item1 != form.group_id).ToArray();
+
+            this.UpdateUsersOnDisk();
+            if (path.Count is 1)
+                this.UpdateTable(this.UpdateFolder());
         }
 
         #endregion

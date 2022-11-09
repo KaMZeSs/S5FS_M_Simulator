@@ -65,7 +65,7 @@ namespace Emulator
                 if (result is not DialogResult.OK)
                     return;
 
-                var cluster_size = (uint)(ClusterSize_comboBox.SelectedText switch
+                var cluster_size = (uint)(ClusterSize_comboBox.SelectedItem.ToString() switch
                 {
                     "512" => 512,
                     "1024" => 1024,

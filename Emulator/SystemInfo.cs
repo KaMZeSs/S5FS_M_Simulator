@@ -24,6 +24,9 @@ namespace Emulator
             FreeData_Label.Text = $"Свободно: {sb.s_tfree * sb.s_blen} байт";
             FullSize_Label.Text = $"Общий размер: {(sb.s_fsize - 2) * sb.s_blen} байт";
             CreationDate_Label.Text = $"Дата создания диска: {date}";
+            BlockSize_Label.Text = $"Размер блока: {sb.s_blen} байт";
+            FreeBlocks_Label.Text = $"Количество свободных блоков: {sb.s_tfree}";
+            FreeInodes_Label.Text = $"Количество свободных инодов: {sb.s_tinode}";
         }
     }
 }
