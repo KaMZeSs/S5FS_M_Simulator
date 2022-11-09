@@ -1146,6 +1146,96 @@ namespace Emulator
             this.UpdateUsersOnDisk();
         }
 
+        private void изменитьГруппуToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            if (dataGridView1.SelectedRows.Count is 0)
+                return;
+
+            var selected_objects = this.GetSelectedObjs();
+
+            if (selected_objects.Any(x => x.IsSystem))
+            {
+                var dr_system =
+                    MessageBox.Show("Пропустить их?",
+                    "Один, или несколько файлов - системные",
+                    MessageBoxButtons.OKCancel);
+                if (dr_system is DialogResult.Cancel)
+                    return;
+            }
+            if (this.curr_user_id is not 0 &&
+                selected_objects.Any(x => x.UserID != this.curr_user_id))
+            {
+                var dr_user =
+                    MessageBox.Show("Пропустить их?",
+                    "Один, или несколько файлов не принадлежат вам",
+                    MessageBoxButtons.OKCancel);
+                if (dr_user is DialogResult.Cancel)
+                    return;
+            }
+
+            var form = new Groups(ref users, ref groups, true);
+            var dialog_result = form.ShowDialog();
+            if (dialog_result is not DialogResult.OK)
+                return;
+
+            foreach (var obj in selected_objects)
+            {
+                if (obj.IsSystem)
+                    continue;
+                if (obj.UserID != this.curr_user_id && this.curr_user_id is not 0)
+                    continue;
+                obj.inode.di_gid = form.group_id;
+                s5fs.WriteInode(obj.inode);
+            }
+
+            this.UpdateTable(this.UpdateFolder());
+        }
+
+        private void изменитьВладельцаToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (dataGridView1.SelectedRows.Count is 0)
+                return;
+
+            var selected_objects = this.GetSelectedObjs();
+
+            if (selected_objects.Any(x => x.IsSystem))
+            {
+                var dr_system = 
+                    MessageBox.Show("Пропустить их?",
+                    "Один, или несколько файлов - системные", 
+                    MessageBoxButtons.OKCancel);
+                if (dr_system is DialogResult.Cancel)
+                    return;
+            }
+            if (this.curr_user_id is not 0 && 
+                selected_objects.Any(x => x.UserID != this.curr_user_id))
+            {
+                var dr_user =
+                    MessageBox.Show("Пропустить их?",
+                    "Один, или несколько файлов не принадлежат вам", 
+                    MessageBoxButtons.OKCancel);
+                if (dr_user is DialogResult.Cancel)
+                    return;
+            }
+
+            var form = new Accounts(ref users, ref groups, true);
+            var dialog_result = form.ShowDialog();
+            if (dialog_result is not DialogResult.OK)
+                return;
+
+            foreach (var obj in selected_objects)
+            {
+                if (obj.IsSystem)
+                    continue;
+                if (obj.UserID != this.curr_user_id && this.curr_user_id is not 0)
+                    continue;
+                obj.inode.di_uid = form.user_id;
+                s5fs.WriteInode(obj.inode);
+            }
+
+            this.UpdateTable(this.UpdateFolder());
+        }
+
         #endregion
     }
 }

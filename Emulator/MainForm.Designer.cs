@@ -58,6 +58,7 @@
             this.вывестиСписокГруппToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.создатьГруппуToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.изменитьГруппуToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.удалитьГруппуToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.dataGridView1 = new System.Windows.Forms.DataGridView();
             this.FileID_Column = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.FileName_Column = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -81,6 +82,9 @@
             this.вырезатьToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.создатьСсылкуToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.свойстваToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
+            this.праваToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.изменитьВладельцаToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.изменитьГруппуToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.System_ContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.вставитьToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.создатьToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
@@ -89,10 +93,6 @@
             this.вывестиИнформациюОФСToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.очиститьБуферОбменаToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.обновитьToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.удалитьГруппуToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.праваToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.изменитьВладельцаToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.изменитьГруппуToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.panel1.SuspendLayout();
             this.panel3.SuspendLayout();
             this.panel4.SuspendLayout();
@@ -347,6 +347,12 @@
             this.изменитьГруппуToolStripMenuItem.Text = "Изменить группу";
             this.изменитьГруппуToolStripMenuItem.Click += new System.EventHandler(this.изменитьГруппуToolStripMenuItem_Click);
             // 
+            // удалитьГруппуToolStripMenuItem
+            // 
+            this.удалитьГруппуToolStripMenuItem.Name = "удалитьГруппуToolStripMenuItem";
+            this.удалитьГруппуToolStripMenuItem.Size = new System.Drawing.Size(197, 22);
+            this.удалитьГруппуToolStripMenuItem.Text = "Удалить группу";
+            // 
             // dataGridView1
             // 
             this.dataGridView1.AllowUserToAddRows = false;
@@ -532,6 +538,29 @@
             this.свойстваToolStripMenuItem1.Text = "Свойства";
             this.свойстваToolStripMenuItem1.Click += new System.EventHandler(this.свойстваToolStripMenuItem1_Click);
             // 
+            // праваToolStripMenuItem
+            // 
+            this.праваToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.изменитьВладельцаToolStripMenuItem,
+            this.изменитьГруппуToolStripMenuItem1});
+            this.праваToolStripMenuItem.Name = "праваToolStripMenuItem";
+            this.праваToolStripMenuItem.Size = new System.Drawing.Size(161, 22);
+            this.праваToolStripMenuItem.Text = "Права";
+            // 
+            // изменитьВладельцаToolStripMenuItem
+            // 
+            this.изменитьВладельцаToolStripMenuItem.Name = "изменитьВладельцаToolStripMenuItem";
+            this.изменитьВладельцаToolStripMenuItem.Size = new System.Drawing.Size(188, 22);
+            this.изменитьВладельцаToolStripMenuItem.Text = "Изменить владельца";
+            this.изменитьВладельцаToolStripMenuItem.Click += new System.EventHandler(this.изменитьВладельцаToolStripMenuItem_Click);
+            // 
+            // изменитьГруппуToolStripMenuItem1
+            // 
+            this.изменитьГруппуToolStripMenuItem1.Name = "изменитьГруппуToolStripMenuItem1";
+            this.изменитьГруппуToolStripMenuItem1.Size = new System.Drawing.Size(188, 22);
+            this.изменитьГруппуToolStripMenuItem1.Text = "Изменить группу";
+            this.изменитьГруппуToolStripMenuItem1.Click += new System.EventHandler(this.изменитьГруппуToolStripMenuItem1_Click);
+            // 
             // System_ContextMenu
             // 
             this.System_ContextMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
@@ -593,33 +622,6 @@
             this.обновитьToolStripMenuItem.Size = new System.Drawing.Size(229, 22);
             this.обновитьToolStripMenuItem.Text = "Обновить";
             this.обновитьToolStripMenuItem.Click += new System.EventHandler(this.обновитьToolStripMenuItem_Click);
-            // 
-            // удалитьГруппуToolStripMenuItem
-            // 
-            this.удалитьГруппуToolStripMenuItem.Name = "удалитьГруппуToolStripMenuItem";
-            this.удалитьГруппуToolStripMenuItem.Size = new System.Drawing.Size(197, 22);
-            this.удалитьГруппуToolStripMenuItem.Text = "Удалить группу";
-            // 
-            // праваToolStripMenuItem
-            // 
-            this.праваToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.изменитьВладельцаToolStripMenuItem,
-            this.изменитьГруппуToolStripMenuItem1});
-            this.праваToolStripMenuItem.Name = "праваToolStripMenuItem";
-            this.праваToolStripMenuItem.Size = new System.Drawing.Size(161, 22);
-            this.праваToolStripMenuItem.Text = "Права";
-            // 
-            // изменитьВладельцаToolStripMenuItem
-            // 
-            this.изменитьВладельцаToolStripMenuItem.Name = "изменитьВладельцаToolStripMenuItem";
-            this.изменитьВладельцаToolStripMenuItem.Size = new System.Drawing.Size(188, 22);
-            this.изменитьВладельцаToolStripMenuItem.Text = "Изменить владельца";
-            // 
-            // изменитьГруппуToolStripMenuItem1
-            // 
-            this.изменитьГруппуToolStripMenuItem1.Name = "изменитьГруппуToolStripMenuItem1";
-            this.изменитьГруппуToolStripMenuItem1.Size = new System.Drawing.Size(188, 22);
-            this.изменитьГруппуToolStripMenuItem1.Text = "Изменить группу";
             // 
             // MainForm
             // 
