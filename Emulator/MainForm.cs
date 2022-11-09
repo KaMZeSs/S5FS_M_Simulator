@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Text;
+using System.Windows.Forms;
 
 using S5FS;
 
@@ -1050,6 +1051,55 @@ namespace Emulator
         {
             var form = new Groups(ref users, ref groups);
             form.ShowDialog(this);
+        }
+
+        private void создатьГруппуToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var form = new AddGroup((from gr in groups select gr.Item2).ToArray());
+
+            var dialog_result = form.ShowDialog(this);
+            if (dialog_result is not DialogResult.OK)
+                return;
+
+            UInt16 newGroupId;
+            try
+            {
+                newGroupId = StaticMethods.GetNextId((from group_ in groups select group_.Item1).ToArray());
+            }
+            catch (Exception)
+            {
+                MessageBox.Show("Невозможно выполнить операцию. Достигнут лимит количества групп.");
+                return;
+            }
+
+            groups = groups.Append(new(newGroupId, form.GroupName, new UInt16[0])).ToArray();
+            groups.OrderBy(x => x.Item1);
+        }
+
+        private void изменитьГруппуToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            UInt16 gid;
+            var form = new Groups(ref users, ref groups, true);
+            while (true)
+            {
+                var dialog_result = form.ShowDialog(this);
+                if (dialog_result is not DialogResult.OK)
+                    return;
+                gid = form.group_id;
+                if (this.curr_user_id is 0)
+                    break;
+                if (this.curr_group_id == gid)
+                    break;
+                MessageBox.Show("У вас нет доступа на изменение групп, не являющихся вашей главной группой.");
+            }
+            using (var change_form = new ReductGroup(ref groups, ref users, gid))
+            {
+                var dialog_result = change_form.ShowDialog(this);
+                if (dialog_result is not DialogResult.OK)
+                    return;
+            }
+            this.WriteUsers();
+            this.WriteGroups();
         }
 
         private void создатьПользователяToolStripMenuItem_Click(object sender, EventArgs e)

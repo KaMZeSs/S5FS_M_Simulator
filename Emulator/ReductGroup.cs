@@ -17,6 +17,14 @@ namespace Emulator
         UInt16 group_id_to_change;
         UInt16 index;
 
+        public ref (UInt16, String, UInt16[]) ChangedGroup
+        {
+            get
+            {
+                return ref groups[index];
+            }
+        }
+
         List<UInt16> users_in_group;
 
         public ReductGroup(ref (UInt16, String, UInt16[])[] groups,
@@ -42,6 +50,9 @@ namespace Emulator
 
         private void DeleteUser_button_Click(object sender, EventArgs e)
         {
+            if (listBox1.SelectedItem is null)
+                return;
+
             var selected_user = users.First(x => x.Item2.Equals(listBox1.SelectedItem.ToString()));
 
             if (selected_user.Item3 == group_id_to_change)
@@ -57,6 +68,7 @@ namespace Emulator
 
         private void ReductGroup_Activated(object sender, EventArgs e)
         {
+            this.textBox1.Text = this.ChangedGroup.Item2;
             this.listBox1.Items.Clear();
 
             foreach (var user_id in users_in_group)
@@ -115,6 +127,9 @@ namespace Emulator
 
             groups[index] = new(group_id_to_change,
                 group_name, users_in_group.ToArray());
+
+            this.DialogResult = DialogResult.OK;
+            this.Close();
         }
     }
 }
