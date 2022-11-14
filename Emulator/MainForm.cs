@@ -21,7 +21,6 @@ namespace Emulator
 
         ushort curr_user_id = 0;
         ushort curr_group_id = 0;
-        bool isRoot = true;
 
         (UInt16, String, UInt16, String)[] users;
         (UInt16, String, UInt16[])[] groups;
@@ -265,8 +264,12 @@ namespace Emulator
                 }
             }
         }
-        Obj[] GetObjsInFolder(Obj root_obj)
+        Obj[] GetObjsInFolder(Obj root_obj, int layer = 0)
         {
+            if (layer is 255)
+            {
+                throw new Exception("Карамба");
+            }
             var root_data = s5fs.ReadDataByInode(root_obj.inode);
             var files = s5fs.GetFilesFromFolderData(root_data);
 
@@ -279,13 +282,13 @@ namespace Emulator
                 file_objs.Add(new(file.Value, file_inode, root_obj.inode));
 
                 if (file_objs.Last().isFolder)
-                    file_objs.AddRange(this.GetObjsInFolder(file_objs.Last()));
+                    file_objs.AddRange(this.GetObjsInFolder(file_objs.Last(), layer + 1));
             }
 
             return file_objs.ToArray();
         }
 
-        Obj[] GetChildObjects(Obj[] files)
+        Obj[] GetChildObjects(Obj[] files, int layer = 0)
         {
             List<Obj> objs = new();
 
@@ -379,7 +382,16 @@ namespace Emulator
 
             var selected_objects = this.GetSelectedObjs();
 
-            var obj_to_delete = GetChildObjects(selected_objects);
+            Obj[] obj_to_delete = null;
+            try
+            {
+                obj_to_delete = GetChildObjects(selected_objects);
+            }
+            catch
+            {
+                MessageBox.Show("Обнаружены зацикленные ссылки. Удаление невозможно.");
+                return;
+            }
 
             if (!this.AccessChecker(this.path.Peek(), AccessType.toWrite))
             {
@@ -687,7 +699,16 @@ namespace Emulator
                         return;
                     }
 
-                    s5fs.AddFileLinkToDirectory(this.path.Peek().inode, obj.inode, obj.Name);
+                    try
+                    {
+                        s5fs.AddFileLinkToDirectory(this.path.Peek().inode, obj.inode, obj.Name);
+                        this.GetChildObjects(new Obj[] { this.path.Peek() });
+                    }
+                    catch
+                    {
+                        s5fs.DeleteFileLinkFromDirectory(this.path.Peek().inode, obj.inode);
+                        MessageBox.Show("Невозможно создать ссылку. Обнаружено зацикливание");
+                    }
                 }
             }
 
@@ -1129,6 +1150,8 @@ namespace Emulator
                 if (dr_user is DialogResult.Cancel)
                     return;
             }
+            if (selected_objects.All(x => x.IsSystem || (x.UserID != this.curr_user_id && this.curr_user_id is not 0)))
+                return;
 
             var form = new Groups(ref users, ref groups, true);
             var dialog_result = form.ShowDialog();
@@ -1174,6 +1197,8 @@ namespace Emulator
                 if (dr_user is DialogResult.Cancel)
                     return;
             }
+            if (selected_objects.All(x => x.IsSystem || (x.UserID != this.curr_user_id && this.curr_user_id is not 0)))
+                return;
 
             var form = new Accounts(ref users, ref groups, true);
             var dialog_result = form.ShowDialog();

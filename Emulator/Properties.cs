@@ -50,10 +50,13 @@ namespace Emulator
             this.OtherWrite_Check.Checked = obj.OtherPermissions.CanWrite;
             this.OtherExecute_Check.Checked = obj.OtherPermissions.CanExecute;
 
-            if (curr_user_id == obj.UserID)
-                return;
-            if (curr_user_id is 0)
-                return;
+            if (!obj.IsSystem)
+            {
+                if (curr_user_id == obj.UserID)
+                    return;
+                if (curr_user_id is 0)
+                    return;
+            }
             
             this.isHidden_Check.Click += isSystem_Check_Click;
             this.isReadOnly_Check.Click += isSystem_Check_Click;
