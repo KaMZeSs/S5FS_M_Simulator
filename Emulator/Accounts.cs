@@ -66,6 +66,8 @@ namespace Emulator
 
             foreach (var row in vs)
             {
+                if (row.name[0] is '$')
+                    continue;
                 dataGridView1.Rows.Add(row.id, row.name, row.group_name);
             }
         }

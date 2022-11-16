@@ -45,6 +45,12 @@ namespace Emulator
                 return;
             }
 
+            if (login.Contains('$'))
+            {
+                MessageBox.Show("Логин не должен содержать \"$\""); ;
+                return;
+            }
+
             if (users.Contains(login))
             {
                 MessageBox.Show("Пользователь с таким именем уже существует");
@@ -70,6 +76,16 @@ namespace Emulator
 
             this.DialogResult = DialogResult.OK;
             this.Close();
+        }
+
+        private void textBox1_TextChanged(object sender, EventArgs e)
+        {
+            if (this.textBox1.Text.Contains('$'))
+            {
+                var vs = this.textBox1.SelectionStart;
+                this.textBox1.Text = this.textBox1.Text.Replace("$", String.Empty);
+                this.textBox1.SelectionStart = vs - 1;
+            }
         }
     }
 }

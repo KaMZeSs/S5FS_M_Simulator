@@ -60,6 +60,7 @@
             this.textBox1.PlaceholderText = "Группа";
             this.textBox1.Size = new System.Drawing.Size(194, 23);
             this.textBox1.TabIndex = 3;
+            this.textBox1.TextChanged += new System.EventHandler(this.textBox1_TextChanged);
             // 
             // AddGroup
             // 

@@ -20,12 +20,8 @@ namespace Emulator
             var openFS = new LoadFS();
             Application.Run(openFS);
 
-            var vs = openFS.s5FS;
-
-            if (vs is null)
-                return;
-
-            Application.Run(new MainForm(vs));
+            if (openFS.s5FS is not null)
+                Application.Run(new MainForm(openFS.s5FS));
         }
     }
 }

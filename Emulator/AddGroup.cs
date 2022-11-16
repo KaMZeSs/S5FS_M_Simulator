@@ -33,6 +33,12 @@ namespace Emulator
                 return;
             }
 
+            if (group.Contains('$'))
+            {
+                MessageBox.Show("Название группы не должно содержать \"$\"");
+                return;
+            }
+
             if (groups.Contains(group))
             {
                 MessageBox.Show("Группа с таким названием уже существует");
@@ -48,6 +54,16 @@ namespace Emulator
         {
             this.DialogResult = DialogResult.Cancel;
             this.Close();
+        }
+
+        private void textBox1_TextChanged(object sender, EventArgs e)
+        {
+            if (this.textBox1.Text.Contains('$'))
+            {
+                var vs = this.textBox1.SelectionStart;
+                this.textBox1.Text = this.textBox1.Text.Replace("$", String.Empty);
+                this.textBox1.SelectionStart = vs - 1;
+            }
         }
     }
 }

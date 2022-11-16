@@ -48,6 +48,8 @@ namespace Emulator
 
             foreach (var row in groups)
             {
+                if (row.Item2[0] is '$')
+                    continue;
                 var users = String.Join(", ", 
                     from user in this.users 
                     where row.Item3.Contains(user.Item1) 

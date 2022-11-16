@@ -35,6 +35,7 @@
             this.panel4 = new System.Windows.Forms.Panel();
             this.copied_label = new System.Windows.Forms.Label();
             this.panel2 = new System.Windows.Forms.Panel();
+            this.label1 = new System.Windows.Forms.Label();
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.файловаяСистемаToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.вывестиРазмерФСToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -96,6 +97,7 @@
             this.panel1.SuspendLayout();
             this.panel3.SuspendLayout();
             this.panel4.SuspendLayout();
+            this.panel2.SuspendLayout();
             this.menuStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             this.File_ContextMenu.SuspendLayout();
@@ -155,12 +157,26 @@
             // 
             // panel2
             // 
+            this.panel2.Controls.Add(this.label1);
             this.panel2.Dock = System.Windows.Forms.DockStyle.Left;
             this.panel2.Location = new System.Drawing.Point(0, 0);
             this.panel2.Name = "panel2";
             this.panel2.Size = new System.Drawing.Size(35, 34);
             this.panel2.TabIndex = 0;
             this.panel2.Click += new System.EventHandler(this.panel2_Click);
+            // 
+            // label1
+            // 
+            this.label1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.label1.Font = new System.Drawing.Font("Segoe UI", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            this.label1.ImageAlign = System.Drawing.ContentAlignment.TopCenter;
+            this.label1.Location = new System.Drawing.Point(0, 0);
+            this.label1.Margin = new System.Windows.Forms.Padding(0);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(35, 34);
+            this.label1.TabIndex = 0;
+            this.label1.Text = "<";
+            this.label1.TextAlign = System.Drawing.ContentAlignment.TopCenter;
             // 
             // menuStrip1
             // 
@@ -641,6 +657,7 @@
             this.panel3.ResumeLayout(false);
             this.panel3.PerformLayout();
             this.panel4.ResumeLayout(false);
+            this.panel2.ResumeLayout(false);
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).EndInit();
@@ -717,5 +734,6 @@
         private ToolStripMenuItem праваToolStripMenuItem;
         private ToolStripMenuItem изменитьВладельцаToolStripMenuItem;
         private ToolStripMenuItem изменитьГруппуToolStripMenuItem1;
+        private Label label1;
     }
 }

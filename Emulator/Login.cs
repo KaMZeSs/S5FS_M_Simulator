@@ -33,6 +33,12 @@ namespace Emulator
                 MessageBox.Show("Логин не должен быть пустым");
                 return;
             }
+
+            if (login.Contains('$'))
+            {
+                MessageBox.Show("Пользователь с таким именем не существует");
+                return;
+            }
             var user = this.users.FirstOrDefault(x => x.Item2.Equals(login));
             if (user.Item2 is null)
             {
@@ -88,6 +94,12 @@ namespace Emulator
                 return;
             }
 
+            if (login.Contains('$'))
+            {
+                MessageBox.Show("Логин не должен содержать \"$\""); ;
+                return;
+            }
+
             if (users.Any(x => x.Item2.Equals(login)))
             {
                 MessageBox.Show("Пользователь с таким именем уже существует");
@@ -113,6 +125,16 @@ namespace Emulator
 
             this.DialogResult = DialogResult.OK;
             this.Close();
+        }
+
+        private void textBox1_TextChanged(object sender, EventArgs e)
+        {
+            if (this.textBox1.Text.Contains('$'))
+            {
+                var vs = this.textBox1.SelectionStart;
+                this.textBox1.Text = this.textBox1.Text.Replace("$", String.Empty);
+                this.textBox1.SelectionStart = vs - 1;
+            }
         }
     }
 }

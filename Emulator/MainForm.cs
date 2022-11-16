@@ -22,6 +22,8 @@ namespace Emulator
         ushort curr_user_id = 0;
         ushort curr_group_id = 0;
 
+        bool isLogged = false;
+
         (UInt16, String, UInt16, String)[] users;
         (UInt16, String, UInt16[])[] groups;
 
@@ -52,6 +54,11 @@ namespace Emulator
             this.ReadGroups();
 
             this.сменитьПользователяToolStripMenuItem.PerformClick();
+
+            if (!isLogged)
+            {
+                Application.Exit();
+            }
 
             this.UpdateTable(this.UpdateFolder());
         }
@@ -87,9 +94,9 @@ namespace Emulator
                 dataGridView1["FileModification_Column", i].Value = objects[i].ChangeDateTime;
                 dataGridView1["FileRead_Column", i].Value = objects[i].ReadDateTime;
                 var owner = users.FirstOrDefault(x => x.Item1 == objects[i].UserID);
-                dataGridView1["FileOwner_Column", i].Value = owner.Item2 ?? "";
+                dataGridView1["FileOwner_Column", i].Value = owner.Item2.Replace("$", "") ?? "";
                 var group = groups.FirstOrDefault(x => x.Item1 == objects[i].GroupID);
-                dataGridView1["FileGroup_Column", i].Value = group.Item2 ?? "";
+                dataGridView1["FileGroup_Column", i].Value = group.Item2.Replace("$", "") ?? "";
                 dataGridView1["Permissions_Column", i].Value = String.Join(' ',
                     Obj.PermToString(objects[i].OwnerPermissions.Data),
                     Obj.PermToString(objects[i].GroupPermissions.Data),
@@ -1009,10 +1016,13 @@ namespace Emulator
                 return;
             }
 
-            var user = users.First(x => x.Item1 == form.user_id);
+            //var user = users.First(x => x.Item1 == form.user_id);
 
-            users = users.Where(x => x.Item1 != form.user_id).ToArray();
-            this.DeleteUserFromGroup(user.Item3, user.Item1);
+            var index = Array.FindIndex(users, x => x.Item1 == form.user_id);
+            users[index] = new(users[index].Item1, '$' + users[index].Item2, users[index].Item3, users[index].Item4);
+
+            //users = users.Where(x => x.Item1 != form.user_id).ToArray();
+            //this.DeleteUserFromGroup(user.Item3, user.Item1);
 
             this.UpdateUsersOnDisk();
             if (path.Count is 1)
@@ -1305,6 +1315,8 @@ namespace Emulator
             this.удалитьПользователяToolStripMenuItem.Enabled = isRoot;
             this.создатьГруппуToolStripMenuItem.Enabled = isRoot;
             this.удалитьГруппуToolStripMenuItem.Enabled = isRoot;
+
+            isLogged = true;
         }
 
         private void удалитьГруппуToolStripMenuItem_Click(object sender, EventArgs e)
@@ -1323,6 +1335,9 @@ namespace Emulator
             }
 
             groups = groups.Where(x => x.Item1 != form.group_id).ToArray();
+
+            var index = Array.FindIndex(groups, x => x.Item1 == form.group_id);
+            groups[index] = new(groups[index].Item1, '$' + groups[index].Item2, groups[index].Item3);
 
             this.UpdateUsersOnDisk();
             if (path.Count is 1)
