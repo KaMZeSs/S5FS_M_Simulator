@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Windows.Forms;
 
@@ -634,6 +635,12 @@ namespace Emulator
                 return;
             }
 
+            if (obj_to_copy.Any(x => this.objs.Where(y => y.Value.Name.Equals(x.Name)).Count() is not 0))
+            {
+                MessageBox.Show("В папке уже существует файл/папка с данным именем");
+                return;
+            }
+
             if (copyCutState is CopyCutState.Copy)
             {
                 var to_copy = this.GetChildObjects(obj_to_copy.ToArray());
@@ -658,7 +665,7 @@ namespace Emulator
                         old_tree.Pop();
                         new_tree.Pop();
                     }
-
+                    
                     var vs1 = this.CopyElement(new_tree.Peek(), obj);
                     if (obj.isFolder)
                     {

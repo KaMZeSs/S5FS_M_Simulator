@@ -437,8 +437,8 @@ namespace S5FS
                     }
                     this.bm_block.ChangeBlockState(inode.di_addr[i], true);
                     this.sb.s_tfree++;
-                    inode.di_addr[i] = 0;
                     var existing_addresses = this.GetAddressesFromBlock(this.ReadFromDataBlock(inode.di_addr[i]));
+                    inode.di_addr[i] = 0;
                     for (int j = 0; j < existing_addresses.Length; j++)
                     {
                         if (block_num is 0)
@@ -458,15 +458,15 @@ namespace S5FS
                     }
                     this.bm_block.ChangeBlockState(inode.di_addr[i], true);
                     this.sb.s_tfree++;
-                    inode.di_addr[i] = 0;
                     var existing_addresses_1 = this.GetAddressesFromBlock(this.ReadFromDataBlock(inode.di_addr[i]));
+                    inode.di_addr[i] = 0;
                     for (int j = 0; j < existing_addresses_1.Length; j++)
                     {
                         if (block_num is 0)
                         {
                             break;
                         }
-                        this.bm_block.ChangeBlockState(inode.di_addr[j], true);
+                        this.bm_block.ChangeBlockState(existing_addresses_1[j], true);
                         this.sb.s_tfree++;
                         var existing_addresses_2 = this.GetAddressesFromBlock(this.ReadFromDataBlock(existing_addresses_1[j]));
                         for (int k = 0; k < existing_addresses_2.Length; k++)
