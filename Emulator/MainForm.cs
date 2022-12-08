@@ -260,7 +260,10 @@ namespace Emulator
                     {
                         MessageBox.Show("Файл доступен только для чтения");
                     }
-                    catch (OutOfMemoryException) { }
+                    catch (OutOfMemoryException) 
+                    {
+                        MessageBox.Show("У вас нет доступа на изменение данного файла");
+                    }
                     catch (Exception)
                     {
                         MessageBox.Show("Недостаточно места. Уменьшите размер файла.");
@@ -390,7 +393,8 @@ namespace Emulator
 
             var selected_objects = this.GetSelectedObjs();
 
-            Obj[] obj_to_delete = null;
+            //Лучшая в мире проверка на зацикливание
+            Obj[] obj_to_delete;
             try
             {
                 obj_to_delete = GetChildObjects(selected_objects);
@@ -407,17 +411,7 @@ namespace Emulator
                 return;
             }
 
-            if (obj_to_delete.Any(x => this.AccessChecker(x, AccessType.toWrite) is false))
-            {
-                MessageBox.Show("У вас нет права на запись, или удаление одного из файлов/папок");
-                return;
-            }
-
-            var size = obj_to_delete.Where(x => x.NLinks is 1).Sum(x => x.GetSize);
-            var links = obj_to_delete.Where(x => x.NLinks is not 1).Count();
-
-            var d_result = MessageBox.Show($"Будет удалено файлов: {obj_to_delete.Length}, занимающих {size} байт." +
-                $"{(links is 0 ? String.Empty : $"Будет удалено ссылок: {links}")}",
+            var d_result = MessageBox.Show($"Потенциально будет удалено файлов: {obj_to_delete.Length}",
                     "Вы точно хотите удалить папку?", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
             if (d_result is DialogResult.No)
@@ -425,15 +419,159 @@ namespace Emulator
                 return;
             }
 
-            obj_to_delete.Reverse();
 
-            foreach (var obj in obj_to_delete)
+            foreach (var obj in selected_objects)
             {
-                s5fs.DeleteFileLinkFromDirectory(obj.parent_inode, obj.inode);
+                try
+                {
+                    if (obj.isFolder)
+                    {
+                        DeleteFolder(obj);
+                    }
+                    else
+                    {
+                        DeleteFile(obj);
+                    }
+                }
+                catch (OutOfMemoryException)
+                {
+                    break;
+                }
+                catch (Exception exc)
+                {
+                    d_result = MessageBox.Show(exc.Message + "\nПродолжить удаление?",
+                    "Ошибка удаления.", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+                    if (d_result is DialogResult.No)
+                    {
+                        break;
+                    }
+                }
             }
+
+            //Obj[] obj_to_delete = null;
+            //try
+            //{
+            //    obj_to_delete = GetChildObjects(selected_objects);
+            //}
+            //catch
+            //{
+            //    MessageBox.Show("Обнаружены зацикленные ссылки. Удаление невозможно.");
+            //    return;
+            //}
+
+            //if (!this.AccessChecker(this.path.Peek(), AccessType.toWrite))
+            //{
+            //    MessageBox.Show("У вас нет права на запись в родительскую папку");
+            //    return;
+            //}
+
+            //if (obj_to_delete.Any(x => this.AccessChecker(x, AccessType.toWrite) is false))
+            //{
+            //    MessageBox.Show("У вас нет права на запись, или удаление одного из файлов/папок");
+            //    return;
+            //}
+
+            //var size = obj_to_delete.Where(x => x.NLinks is 1).Sum(x => x.GetSize);
+            //var links = obj_to_delete.Where(x => x.NLinks is not 1).Count();
+
+            //var d_result = MessageBox.Show($"Будет удалено файлов: {obj_to_delete.Length}, занимающих {size} байт." +
+            //    $"{(links is 0 ? String.Empty : $"Будет удалено ссылок: {links}")}",
+            //        "Вы точно хотите удалить папку?", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+            //if (d_result is DialogResult.No)
+            //{
+            //    return;
+            //}
+
+            //obj_to_delete.Reverse();
+
+            //foreach (var obj in obj_to_delete)
+            //{
+            //    s5fs.DeleteFileLinkFromDirectory(obj.parent_inode, obj.inode);
+            //}
 
             var vs = this.UpdateFolder();
             this.UpdateTable(vs);
+        }
+
+        private void DeleteFile(Obj obj)
+        {
+            if (!this.AccessChecker(new Obj("", obj.parent_inode, null), AccessType.toWrite))
+            {
+                throw new Exception($"Нет прав на изменение родительской папки файла \"{obj.Name}\"");
+            }
+            if (!this.AccessChecker(obj, AccessType.toWrite))
+            {
+                throw new Exception($"Нет прав на удаление файла \"{obj.Name}\"");
+            }
+            s5fs.DeleteFileLinkFromDirectory(obj.parent_inode, obj.inode);
+        }
+
+        private Obj[] FilesInFolder(Obj folder)
+        {
+            if (!folder.isFolder)
+            {
+                throw new Exception($"{folder.Name} - не папка");
+            }
+
+            var root_inode = folder.inode;
+            var root_data = s5fs.ReadDataByInode(root_inode);
+            var files = s5fs.GetFilesFromFolderData(root_data);
+
+            //var root_obj = new Obj("", root_inode, null);
+
+            List<Obj> file_objs = new();
+
+            foreach (var file in files)
+            {
+                var file_inode = s5fs.ReadInode(file.Key);
+
+                file_objs.Add(new(file.Value, file_inode, root_inode));
+            }
+
+            return file_objs.ToArray();
+        }
+
+        private void DeleteFolder(Obj obj)
+        {
+            var files = this.FilesInFolder(obj);
+
+            bool canDeleteFolder = true;
+            foreach (var file in files)
+            {
+                try
+                {
+                    if (file.isFolder)
+                    {
+                        DeleteFolder(file);
+                    }
+                    else
+                    {
+                        DeleteFile(file);
+                    }
+                }
+                catch (OutOfMemoryException)
+                {
+                    throw new OutOfMemoryException();
+                }
+                catch (Exception exc)
+                {
+                    canDeleteFolder = false;
+                    var d_result = MessageBox.Show(exc.Message + "\nПродолжить удаление?",
+                    "Ошибка удаления.", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+                    if (d_result is DialogResult.No)
+                    {
+                        throw new OutOfMemoryException();
+                    }
+                }
+            }
+
+            if (!canDeleteFolder)
+                throw new Exception($"Невозможно удалить папку \"{obj.Name}\", содержащую файлы");
+            this.DeleteFile(obj);
+            //s5fs.DeleteFileLinkFromDirectory(obj.parent_inode, obj.inode);
         }
 
         private void вывестиРазмерФСToolStripMenuItem_Click(object sender, EventArgs e)
@@ -1324,6 +1462,11 @@ namespace Emulator
             this.удалитьГруппуToolStripMenuItem.Enabled = isRoot;
 
             isLogged = true;
+        }
+
+        private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+
         }
 
         private void удалитьГруппуToolStripMenuItem_Click(object sender, EventArgs e)
