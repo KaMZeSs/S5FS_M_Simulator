@@ -54,6 +54,7 @@
             this.ExecutionPerm_Label = new System.Windows.Forms.Label();
             this.button1 = new System.Windows.Forms.Button();
             this.button2 = new System.Windows.Forms.Button();
+            this.Group_Label = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // Name_Label
@@ -86,7 +87,7 @@
             // CreationDate_Label
             // 
             this.CreationDate_Label.AutoSize = true;
-            this.CreationDate_Label.Location = new System.Drawing.Point(12, 111);
+            this.CreationDate_Label.Location = new System.Drawing.Point(12, 146);
             this.CreationDate_Label.Name = "CreationDate_Label";
             this.CreationDate_Label.Size = new System.Drawing.Size(91, 15);
             this.CreationDate_Label.TabIndex = 0;
@@ -95,7 +96,7 @@
             // ModificationDate_Label
             // 
             this.ModificationDate_Label.AutoSize = true;
-            this.ModificationDate_Label.Location = new System.Drawing.Point(12, 142);
+            this.ModificationDate_Label.Location = new System.Drawing.Point(12, 177);
             this.ModificationDate_Label.Name = "ModificationDate_Label";
             this.ModificationDate_Label.Size = new System.Drawing.Size(101, 15);
             this.ModificationDate_Label.TabIndex = 0;
@@ -104,7 +105,7 @@
             // ReadDate_Label
             // 
             this.ReadDate_Label.AutoSize = true;
-            this.ReadDate_Label.Location = new System.Drawing.Point(12, 178);
+            this.ReadDate_Label.Location = new System.Drawing.Point(12, 213);
             this.ReadDate_Label.Name = "ReadDate_Label";
             this.ReadDate_Label.Size = new System.Drawing.Size(79, 15);
             this.ReadDate_Label.TabIndex = 0;
@@ -113,7 +114,7 @@
             // isHidden_Check
             // 
             this.isHidden_Check.AutoSize = true;
-            this.isHidden_Check.Location = new System.Drawing.Point(12, 211);
+            this.isHidden_Check.Location = new System.Drawing.Point(12, 246);
             this.isHidden_Check.Name = "isHidden_Check";
             this.isHidden_Check.Size = new System.Drawing.Size(77, 19);
             this.isHidden_Check.TabIndex = 1;
@@ -123,7 +124,7 @@
             // isReadOnly_Check
             // 
             this.isReadOnly_Check.AutoSize = true;
-            this.isReadOnly_Check.Location = new System.Drawing.Point(12, 236);
+            this.isReadOnly_Check.Location = new System.Drawing.Point(12, 271);
             this.isReadOnly_Check.Name = "isReadOnly_Check";
             this.isReadOnly_Check.Size = new System.Drawing.Size(128, 19);
             this.isReadOnly_Check.TabIndex = 1;
@@ -133,7 +134,7 @@
             // isSystem_Check
             // 
             this.isSystem_Check.AutoSize = true;
-            this.isSystem_Check.Location = new System.Drawing.Point(12, 261);
+            this.isSystem_Check.Location = new System.Drawing.Point(12, 296);
             this.isSystem_Check.Name = "isSystem_Check";
             this.isSystem_Check.Size = new System.Drawing.Size(90, 19);
             this.isSystem_Check.TabIndex = 1;
@@ -144,7 +145,7 @@
             // OwnerPerm_Label
             // 
             this.OwnerPerm_Label.AutoSize = true;
-            this.OwnerPerm_Label.Location = new System.Drawing.Point(11, 312);
+            this.OwnerPerm_Label.Location = new System.Drawing.Point(11, 347);
             this.OwnerPerm_Label.Name = "OwnerPerm_Label";
             this.OwnerPerm_Label.Size = new System.Drawing.Size(59, 15);
             this.OwnerPerm_Label.TabIndex = 2;
@@ -153,7 +154,7 @@
             // GroupPerm_Label
             // 
             this.GroupPerm_Label.AutoSize = true;
-            this.GroupPerm_Label.Location = new System.Drawing.Point(12, 343);
+            this.GroupPerm_Label.Location = new System.Drawing.Point(12, 378);
             this.GroupPerm_Label.Name = "GroupPerm_Label";
             this.GroupPerm_Label.Size = new System.Drawing.Size(46, 15);
             this.GroupPerm_Label.TabIndex = 2;
@@ -162,7 +163,7 @@
             // OtherPerm_Label
             // 
             this.OtherPerm_Label.AutoSize = true;
-            this.OtherPerm_Label.Location = new System.Drawing.Point(11, 374);
+            this.OtherPerm_Label.Location = new System.Drawing.Point(11, 409);
             this.OtherPerm_Label.Name = "OtherPerm_Label";
             this.OtherPerm_Label.Size = new System.Drawing.Size(46, 15);
             this.OtherPerm_Label.TabIndex = 2;
@@ -171,7 +172,7 @@
             // UserRead_Check
             // 
             this.UserRead_Check.AutoSize = true;
-            this.UserRead_Check.Location = new System.Drawing.Point(88, 313);
+            this.UserRead_Check.Location = new System.Drawing.Point(88, 348);
             this.UserRead_Check.Name = "UserRead_Check";
             this.UserRead_Check.Size = new System.Drawing.Size(15, 14);
             this.UserRead_Check.TabIndex = 3;
@@ -180,7 +181,7 @@
             // GroupRead_Check
             // 
             this.GroupRead_Check.AutoSize = true;
-            this.GroupRead_Check.Location = new System.Drawing.Point(88, 344);
+            this.GroupRead_Check.Location = new System.Drawing.Point(88, 379);
             this.GroupRead_Check.Name = "GroupRead_Check";
             this.GroupRead_Check.Size = new System.Drawing.Size(15, 14);
             this.GroupRead_Check.TabIndex = 3;
@@ -189,7 +190,7 @@
             // OtherRead_Check
             // 
             this.OtherRead_Check.AutoSize = true;
-            this.OtherRead_Check.Location = new System.Drawing.Point(88, 375);
+            this.OtherRead_Check.Location = new System.Drawing.Point(88, 410);
             this.OtherRead_Check.Name = "OtherRead_Check";
             this.OtherRead_Check.Size = new System.Drawing.Size(15, 14);
             this.OtherRead_Check.TabIndex = 3;
@@ -198,7 +199,7 @@
             // OtherWrite_Check
             // 
             this.OtherWrite_Check.AutoSize = true;
-            this.OtherWrite_Check.Location = new System.Drawing.Point(125, 375);
+            this.OtherWrite_Check.Location = new System.Drawing.Point(125, 410);
             this.OtherWrite_Check.Name = "OtherWrite_Check";
             this.OtherWrite_Check.Size = new System.Drawing.Size(15, 14);
             this.OtherWrite_Check.TabIndex = 3;
@@ -207,7 +208,7 @@
             // GroupWrite_Check
             // 
             this.GroupWrite_Check.AutoSize = true;
-            this.GroupWrite_Check.Location = new System.Drawing.Point(125, 344);
+            this.GroupWrite_Check.Location = new System.Drawing.Point(125, 379);
             this.GroupWrite_Check.Name = "GroupWrite_Check";
             this.GroupWrite_Check.Size = new System.Drawing.Size(15, 14);
             this.GroupWrite_Check.TabIndex = 3;
@@ -216,7 +217,7 @@
             // UserWrite_Check
             // 
             this.UserWrite_Check.AutoSize = true;
-            this.UserWrite_Check.Location = new System.Drawing.Point(125, 313);
+            this.UserWrite_Check.Location = new System.Drawing.Point(125, 348);
             this.UserWrite_Check.Name = "UserWrite_Check";
             this.UserWrite_Check.Size = new System.Drawing.Size(15, 14);
             this.UserWrite_Check.TabIndex = 3;
@@ -225,7 +226,7 @@
             // OtherExecute_Check
             // 
             this.OtherExecute_Check.AutoSize = true;
-            this.OtherExecute_Check.Location = new System.Drawing.Point(162, 375);
+            this.OtherExecute_Check.Location = new System.Drawing.Point(162, 410);
             this.OtherExecute_Check.Name = "OtherExecute_Check";
             this.OtherExecute_Check.Size = new System.Drawing.Size(15, 14);
             this.OtherExecute_Check.TabIndex = 3;
@@ -234,7 +235,7 @@
             // GroupExecute_Check
             // 
             this.GroupExecute_Check.AutoSize = true;
-            this.GroupExecute_Check.Location = new System.Drawing.Point(162, 344);
+            this.GroupExecute_Check.Location = new System.Drawing.Point(162, 379);
             this.GroupExecute_Check.Name = "GroupExecute_Check";
             this.GroupExecute_Check.Size = new System.Drawing.Size(15, 14);
             this.GroupExecute_Check.TabIndex = 3;
@@ -243,7 +244,7 @@
             // UserExecute_Check
             // 
             this.UserExecute_Check.AutoSize = true;
-            this.UserExecute_Check.Location = new System.Drawing.Point(162, 313);
+            this.UserExecute_Check.Location = new System.Drawing.Point(162, 348);
             this.UserExecute_Check.Name = "UserExecute_Check";
             this.UserExecute_Check.Size = new System.Drawing.Size(15, 14);
             this.UserExecute_Check.TabIndex = 3;
@@ -252,7 +253,7 @@
             // ReadPerm_Label
             // 
             this.ReadPerm_Label.AutoSize = true;
-            this.ReadPerm_Label.Location = new System.Drawing.Point(57, 295);
+            this.ReadPerm_Label.Location = new System.Drawing.Point(57, 330);
             this.ReadPerm_Label.Name = "ReadPerm_Label";
             this.ReadPerm_Label.Size = new System.Drawing.Size(46, 15);
             this.ReadPerm_Label.TabIndex = 4;
@@ -261,7 +262,7 @@
             // WritePerm_Label
             // 
             this.WritePerm_Label.AutoSize = true;
-            this.WritePerm_Label.Location = new System.Drawing.Point(109, 295);
+            this.WritePerm_Label.Location = new System.Drawing.Point(109, 330);
             this.WritePerm_Label.Name = "WritePerm_Label";
             this.WritePerm_Label.Size = new System.Drawing.Size(46, 15);
             this.WritePerm_Label.TabIndex = 4;
@@ -270,7 +271,7 @@
             // ExecutionPerm_Label
             // 
             this.ExecutionPerm_Label.AutoSize = true;
-            this.ExecutionPerm_Label.Location = new System.Drawing.Point(161, 295);
+            this.ExecutionPerm_Label.Location = new System.Drawing.Point(161, 330);
             this.ExecutionPerm_Label.Name = "ExecutionPerm_Label";
             this.ExecutionPerm_Label.Size = new System.Drawing.Size(77, 15);
             this.ExecutionPerm_Label.TabIndex = 4;
@@ -278,7 +279,7 @@
             // 
             // button1
             // 
-            this.button1.Location = new System.Drawing.Point(11, 412);
+            this.button1.Location = new System.Drawing.Point(11, 447);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(91, 23);
             this.button1.TabIndex = 5;
@@ -288,7 +289,7 @@
             // 
             // button2
             // 
-            this.button2.Location = new System.Drawing.Point(140, 412);
+            this.button2.Location = new System.Drawing.Point(140, 447);
             this.button2.Name = "button2";
             this.button2.Size = new System.Drawing.Size(91, 23);
             this.button2.TabIndex = 5;
@@ -296,11 +297,21 @@
             this.button2.UseVisualStyleBackColor = true;
             this.button2.Click += new System.EventHandler(this.button2_Click);
             // 
+            // Group_Label
+            // 
+            this.Group_Label.AutoSize = true;
+            this.Group_Label.Location = new System.Drawing.Point(12, 114);
+            this.Group_Label.Name = "Group_Label";
+            this.Group_Label.Size = new System.Drawing.Size(106, 15);
+            this.Group_Label.TabIndex = 6;
+            this.Group_Label.Text = "Группа владелец: ";
+            // 
             // Properties
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(243, 447);
+            this.ClientSize = new System.Drawing.Size(244, 482);
+            this.Controls.Add(this.Group_Label);
             this.Controls.Add(this.button2);
             this.Controls.Add(this.button1);
             this.Controls.Add(this.ExecutionPerm_Label);
@@ -328,6 +339,8 @@
             this.Controls.Add(this.Size_Label);
             this.Controls.Add(this.Name_Label);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
+            this.MaximumSize = new System.Drawing.Size(500, 521);
+            this.MinimumSize = new System.Drawing.Size(260, 521);
             this.Name = "Properties";
             this.Text = "Properties";
             this.Load += new System.EventHandler(this.Properties_Load);
@@ -364,5 +377,6 @@
         private Label ExecutionPerm_Label;
         private Button button1;
         private Button button2;
+        private Label Group_Label;
     }
 }

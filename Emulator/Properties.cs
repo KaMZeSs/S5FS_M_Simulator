@@ -15,13 +15,16 @@ namespace Emulator
         public Obj obj;
         ushort curr_user_id;
         (UInt16, String, UInt16, String)[] users;
+        (UInt16, String, UInt16[])[] groups;
 
-        public Properties(Obj obj, ushort curr_user_id, ref (UInt16, String, UInt16, String)[] users)
+        public Properties(Obj obj, ushort curr_user_id, ref (UInt16, String, UInt16, String)[] users,
+            ref (UInt16, String, UInt16[])[] groups)
         {
             InitializeComponent();
             this.obj = obj;
             this.users = users;
             this.curr_user_id = curr_user_id;
+            this.groups = groups;
         }
 
         private void Properties_Load(object sender, EventArgs e)
@@ -29,7 +32,9 @@ namespace Emulator
             this.Name_Label.Text += obj.Name;
             this.Size_Label.Text += obj.GetSize;
             var owner = users.FirstOrDefault(x => x.Item1 == obj.UserID);
-            this.Creator_Label.Text += owner.Item2 ?? "Пользователь удален";
+            this.Creator_Label.Text += owner.Item2.Replace("$", "") + (owner.Item2.StartsWith('$') ? " - удален" : "") ?? "Пользователь удален";
+            var group = groups.FirstOrDefault(x => x.Item1 == obj.GroupID);
+            this.Group_Label.Text += group.Item2.Replace("$", "") + (group.Item2.StartsWith('$') ? " - удалена" : "") ?? "Группа удалена";
             this.CreationDate_Label.Text += obj.CreationTime.ToString("f");
             this.ModificationDate_Label.Text += obj.ChangeDateTime.ToString("f");
             this.ReadDate_Label.Text += obj.ReadDateTime.ToString("f");

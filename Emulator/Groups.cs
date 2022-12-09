@@ -52,7 +52,7 @@ namespace Emulator
                     continue;
                 var users = String.Join(", ", 
                     from user in this.users 
-                    where row.Item3.Contains(user.Item1) 
+                    where (row.Item3.Contains(user.Item1) && !user.Item2.StartsWith("$"))
                     select user.Item2);
                 dataGridView1.Rows.Add(row.Item1, row.Item2, users);
             }

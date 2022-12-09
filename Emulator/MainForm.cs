@@ -953,7 +953,7 @@ namespace Emulator
 
             var selected_obj = this.objs.Find(x => x.Key.Equals(selected_obj_id)).Value;
 
-            var form = new Properties(selected_obj, curr_user_id, ref users);
+            var form = new Properties(selected_obj, curr_user_id, ref users, ref groups);
             var d_result = form.ShowDialog();
             if (d_result is not DialogResult.OK)
             {
@@ -1165,6 +1165,10 @@ namespace Emulator
 
             var index = Array.FindIndex(users, x => x.Item1 == form.user_id);
             users[index] = new(users[index].Item1, '$' + users[index].Item2, users[index].Item3, users[index].Item4);
+
+            var index2 = Array.FindIndex(groups, x => x.Item1 == users[index].Item3);
+            groups[index2] = new(groups[index2].Item1, '$' + groups[index2].Item2, groups[index2].Item3);
+
 
             //users = users.Where(x => x.Item1 != form.user_id).ToArray();
             //this.DeleteUserFromGroup(user.Item3, user.Item1);
