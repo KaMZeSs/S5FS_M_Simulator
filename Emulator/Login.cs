@@ -41,7 +41,7 @@ namespace Emulator
             }
             if (login.Contains(':'))
             {
-                MessageBox.Show("Логин не должен содержать \"$\""); ;
+                MessageBox.Show("Логин не должен содержать \":\""); ;
                 return;
             }
             var user = this.users.FirstOrDefault(x => x.Item2.Equals(login));

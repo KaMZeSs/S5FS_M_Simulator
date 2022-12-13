@@ -53,7 +53,7 @@ namespace Emulator
 
             if (login.Contains(':'))
             {
-                MessageBox.Show("Логин не должен содержать \"$\""); ;
+                MessageBox.Show("Логин не должен содержать \":\""); ;
                 return;
             }
 
