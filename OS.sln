@@ -7,8 +7,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "S5FS", "S5FS\S5FS.csproj", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Emulator", "Emulator\Emulator.csproj", "{15362B25-D19F-4DD5-B8C6-713346E1C4BD}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Test", "Test\Test.csproj", "{149D1E1A-1DB8-479E-B8EA-46298F00EE54}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -23,10 +21,6 @@ Global
 		{15362B25-D19F-4DD5-B8C6-713346E1C4BD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{15362B25-D19F-4DD5-B8C6-713346E1C4BD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{15362B25-D19F-4DD5-B8C6-713346E1C4BD}.Release|Any CPU.Build.0 = Release|Any CPU
-		{149D1E1A-1DB8-479E-B8EA-46298F00EE54}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{149D1E1A-1DB8-479E-B8EA-46298F00EE54}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{149D1E1A-1DB8-479E-B8EA-46298F00EE54}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{149D1E1A-1DB8-479E-B8EA-46298F00EE54}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

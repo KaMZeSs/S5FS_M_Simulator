@@ -51,6 +51,12 @@ namespace Emulator
                 return;
             }
 
+            if (login.Contains(':'))
+            {
+                MessageBox.Show("Логин не должен содержать \"$\""); ;
+                return;
+            }
+
             if (users.Contains(login))
             {
                 MessageBox.Show("Пользователь с таким именем уже существует");

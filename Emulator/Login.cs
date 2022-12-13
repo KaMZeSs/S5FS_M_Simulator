@@ -39,6 +39,11 @@ namespace Emulator
                 MessageBox.Show("Пользователь с таким именем не существует");
                 return;
             }
+            if (login.Contains(':'))
+            {
+                MessageBox.Show("Логин не должен содержать \"$\""); ;
+                return;
+            }
             var user = this.users.FirstOrDefault(x => x.Item2.Equals(login));
             if (user.Item2 is null)
             {
@@ -94,6 +99,11 @@ namespace Emulator
                 return;
             }
 
+            if (login.Contains('$'))
+            {
+                MessageBox.Show("Логин не должен содержать \"$\""); ;
+                return;
+            }
             if (login.Contains('$'))
             {
                 MessageBox.Show("Логин не должен содержать \"$\""); ;

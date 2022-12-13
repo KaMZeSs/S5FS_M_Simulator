@@ -143,6 +143,7 @@ namespace Emulator
 
         Obj[] OpenFolder(Obj folder)
         {
+
             if (!folder.isFolder)
             {
                 throw new Exception($"{folder.Name} - не папка");
@@ -431,6 +432,29 @@ namespace Emulator
                     else
                     {
                         DeleteFile(obj);
+                    }
+                    if (obj_to_copy.Where(x => x.inode.index.Equals(obj.inode.index)).Count() is not 0)
+                    {
+                        obj_to_copy = obj_to_copy.Where(x => !x.inode.index.Equals(obj.inode.index)).ToList();
+
+                        switch (this.copyCutState)
+                        {
+                            case CopyCutState.Copy:
+                            {
+                                copied_label.Text = $"Скопировано элементов: {obj_to_copy.Count}";
+                                break;
+                            }
+                            case CopyCutState.Cut:
+                            {
+                                copied_label.Text = $"Вырезано элементов: {obj_to_copy.Count}";
+                                break;
+                            }
+                            case CopyCutState.Link:
+                            {
+                                copied_label.Text = $"Элементов для ссылки: {obj_to_copy.Count}";
+                                break;
+                            }
+                        }
                     }
                 }
                 catch (OutOfMemoryException)
@@ -843,7 +867,7 @@ namespace Emulator
             {
                 foreach (var obj in obj_to_copy)
                 {
-                    if (this.path.Any(x => x.inode.Equals(obj.inode)))
+                    if (this.path.Any(x => x.inode.index.Equals((obj.inode.index))))
                     {
                         MessageBox.Show("Корневая папка, в которую " +
                             "следует поместить ссылку, является дочерней " +
